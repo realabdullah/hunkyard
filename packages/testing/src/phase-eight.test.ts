@@ -3,7 +3,7 @@ import { mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createLocalEmbedder } from '@reviewlab/agents';
+import { createCorrectnessReviewer, createLocalEmbedder } from '@reviewlab/agents';
 import { collectContext, loadTarget, resolvePolicy, withSharedPolicy } from '@reviewlab/context';
 import {
   createReviewPlan,
@@ -482,5 +482,46 @@ test('extension bridge invokes installed ESM CLI through explicit Node without s
   } finally {
     await fixture.dispose();
     await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test('a large change is trimmed to each reviewer share of the run budget instead of failing', async () => {
+  const fixture = await createGitFixture();
+  try {
+    for (let index = 0; index < 40; index++)
+      await writeFile(
+        join(fixture.root, `module-${index}.ts`),
+        `${Array.from({ length: 60 }, (_, line) => `export const value${index}_${line} = ${line};`).join('\n')}\n`,
+      );
+    await fixture.git('add', '.');
+    const snapshot = await captureStaged(fixture.root);
+    const reader = { entries: [], read: async () => null };
+    const prompts: number[] = [];
+    const service = createReviewService({
+      root: fixture.root,
+      store: createSqliteSessionStore(fixture.root),
+      captureStaged: async () => snapshot,
+      resolvePolicy: async () => policy,
+      loadTarget: async () => target,
+      loadReviewOptions: async () => ReviewOptionsSchema.parse({ profile: 'quick' }),
+      buildContext: (frozen, resolved, contextTarget) =>
+        collectContext(frozen, resolved, contextTarget, reader),
+      agent: createCorrectnessReviewer(async (_url, body) => {
+        prompts.push(Buffer.byteLength(JSON.stringify(body)));
+        return { message: { content: '{"findings":[]}' } };
+      }),
+    });
+    const session = await service.start({}, { profile: 'quick' });
+    await service.execute(session.id);
+    const done = await createSqliteSessionStore(fixture.root).get(session.id);
+    expect(done?.error).toBeUndefined();
+    expect(done?.status).toBe('completed');
+    expect(prompts).toHaveLength(1);
+    expect(done?.orchestration?.reservedTokens).toBeLessThanOrEqual(done?.plan?.maxTokens ?? 0);
+    expect(done?.context?.files.length).toBeLessThan(40);
+    expect(done?.context?.omissions?.some((entry) => /input budget/.test(entry.reason))).toBe(true);
+    await service.shutdown();
+  } finally {
+    await fixture.dispose();
   }
 });

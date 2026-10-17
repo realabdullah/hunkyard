@@ -292,6 +292,60 @@ test('conversation gateway enforces local-only egress and redacts prompts withou
   }
 });
 
+test('streamed answers reach the caller live, keep the 8000-char contract and never leave local-only', async () => {
+  const f = await setup();
+  try {
+    const state = await f.service.interaction.message(f.session.id, {
+      revision: 0,
+      runId: f.session.runId,
+      text: 'note',
+    });
+    const message = state.messages[0];
+    if (!message) throw new Error('Missing message');
+    const signal = new AbortController().signal;
+    const ndjson = (...parts: string[]) =>
+      async function* () {
+        yield* parts.map((content, index) =>
+          index === parts.length - 1
+            ? `{"message":{"content":${JSON.stringify(content)}},"done":true,"done_reason":"stop"}\n`
+            : `{"message":{"content":${JSON.stringify(content)}},"done":false}\n`,
+        );
+      };
+    const seen: string[] = [];
+    const answer = await createConversationResponder(
+      async () => f.target,
+      undefined,
+      undefined,
+      ndjson('Use ', 'timingSafeEqual', '.'),
+    )({ session: f.session, state, message, signal, onDelta: (text) => seen.push(text) });
+    expect(seen).toEqual(['Use ', 'timingSafeEqual', '.']);
+    expect(answer.text).toBe('Use timingSafeEqual.');
+    await expect(
+      createConversationResponder(
+        async () => f.target,
+        undefined,
+        undefined,
+        ndjson('x'.repeat(8001), ''),
+      )({ session: f.session, state, message, signal, onDelta: () => {} }),
+    ).rejects.toThrow('truncated');
+    let streams = 0;
+    await expect(
+      createConversationResponder(
+        async () => ({ ...f.target, provider: 'openai', endpoint: 'https://api.openai.com' }),
+        undefined,
+        undefined,
+        async function* () {
+          streams++;
+          yield '';
+        },
+      )({ session: f.session, state, message, signal, onDelta: () => {} }),
+    ).rejects.toThrow('Local-only');
+    expect(streams).toBe(0);
+  } finally {
+    await f.dispose();
+  }
+});
+
 test('an editor recreating the destination during publication wins; both byte streams are retained', async () => {
   const f = await setup();
   const renameMock = vi.mocked(fs.rename);
