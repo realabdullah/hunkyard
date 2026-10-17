@@ -1,8 +1,10 @@
 import { startServer } from './runtime';
 
-const runtime = await startServer(process.env.REVIEWLAB_REPO || process.cwd());
+const runtime = await startServer(
+  process.env.HUNKYARD_REPO || process.env.REVIEWLAB_REPO || process.cwd(),
+);
 console.log(
-  `ReviewLab is listening at ${runtime.origin}. Use reviewlab open to launch an authorized workspace.`,
+  `Hunkyard is listening at ${runtime.origin}. Use hunkyard open to launch an authorized workspace.`,
 );
 const stop = async () => {
   await runtime.close();

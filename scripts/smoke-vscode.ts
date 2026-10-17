@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path';
 import { promisify } from 'node:util';
 
 const execute = promisify(execFile);
-const directory = await mkdtemp(join(tmpdir(), 'reviewlab-vscode-smoke-'));
+const directory = await mkdtemp(join(tmpdir(), 'hunkyard-vscode-smoke-'));
 try {
   const flags = [
     '--user-data-dir',
@@ -13,10 +13,10 @@ try {
     '--extensions-dir',
     join(directory, 'extensions'),
   ];
-  const code = process.env.REVIEWLAB_VSCODE_EXECUTABLE ?? 'code';
+  const code = process.env.HUNKYARD_VSCODE_EXECUTABLE ?? 'code';
   const installed = await execute(
     code,
-    [...flags, '--install-extension', resolve('dist/reviewlab-vscode-0.1.1.vsix')],
+    [...flags, '--install-extension', resolve('dist/hunkyard-vscode-0.1.1.vsix')],
     { timeout: 60000 },
   );
   if (!installed.stdout.includes('successfully installed'))
@@ -24,9 +24,9 @@ try {
   const listed = await execute(code, [...flags, '--list-extensions', '--show-versions'], {
     timeout: 60000,
   });
-  if (!listed.stdout.includes('reviewlab.reviewlab-vscode@0.1.1'))
+  if (!listed.stdout.includes('hunkyard.hunkyard-vscode@0.1.1'))
     throw new Error('Installed extension is missing from the isolated profile.');
-  await execute(code, [...flags, '--uninstall-extension', 'reviewlab.reviewlab-vscode'], {
+  await execute(code, [...flags, '--uninstall-extension', 'hunkyard.hunkyard-vscode'], {
     timeout: 60000,
   });
   console.log(

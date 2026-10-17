@@ -1,4 +1,4 @@
-import type { Finding } from '@reviewlab/domain';
+import type { Finding } from '@hunkyard/domain';
 import { effectiveStatus } from './finding-status';
 import type { InteractionAccess } from './interaction-access';
 import type { ReviewServiceDependencies } from './ports';

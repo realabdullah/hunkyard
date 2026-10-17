@@ -1,12 +1,12 @@
 import { createHash } from 'node:crypto';
-import { collectContext, projectSettings, type SemanticRetriever } from '@reviewlab/context';
+import { collectContext, projectSettings, type SemanticRetriever } from '@hunkyard/context';
 import type {
   ContextManifest,
   ModelTarget,
   ReviewPolicyBundle,
   ReviewSnapshot,
-} from '@reviewlab/domain';
-import { runBytes, treeEntries } from '@reviewlab/git';
+} from '@hunkyard/domain';
+import { runBytes, treeEntries } from '@hunkyard/git';
 
 export const buildFrozenContext = async (
   snapshot: ReviewSnapshot,

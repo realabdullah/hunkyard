@@ -1,10 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { parsePullRequest, pullRequestAdvisory, pullRequestLocation } from '@reviewlab/domain';
-import { capturePullRequest, runBytes } from '@reviewlab/git';
-import { createGitHubClient, createGitHubProvider } from '@reviewlab/providers';
-import { createApi } from '@reviewlab/server/app';
-import { createSqliteSessionStore } from '@reviewlab/storage';
+import { parsePullRequest, pullRequestAdvisory, pullRequestLocation } from '@hunkyard/domain';
+import { capturePullRequest, runBytes } from '@hunkyard/git';
+import { createGitHubClient, createGitHubProvider } from '@hunkyard/providers';
+import { createApi } from '@hunkyard/server/app';
+import { createSqliteSessionStore } from '@hunkyard/storage';
 import { expect, test, vi } from 'vitest';
 import { request, setup } from './phase-six-fixture';
 
@@ -254,7 +254,7 @@ test('API launches PR, refresh requires consent, and local-only network access f
           host: '127.0.0.1:4317',
           authorization: 'Bearer fixture-token',
           origin: 'http://127.0.0.1:4317',
-          'x-reviewlab-csrf': '1',
+          'x-hunkyard-csrf': '1',
           'content-type': 'application/json',
         },
         body: JSON.stringify(body),

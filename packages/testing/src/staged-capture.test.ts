@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { chmod, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { captureStaged, createStagedCapture, type GitRunner } from '@reviewlab/git';
+import { captureStaged, createStagedCapture, type GitRunner } from '@hunkyard/git';
 import { expect, test } from 'vitest';
 import { createGitFixture } from './git-fixture';
 

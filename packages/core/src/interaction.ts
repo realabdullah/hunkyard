@@ -6,7 +6,7 @@ import {
   PatchDraftRequestSchema,
   ReactionRequestSchema,
   StatusRequestSchema,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 import { effectiveStatus } from './finding-status';
 import type { InteractionAccess } from './interaction-access';
 import type { ReviewServiceDependencies } from './ports';

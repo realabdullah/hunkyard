@@ -6,6 +6,7 @@ import './styles.css';
 import { createCamera, type Rect } from './camera';
 import { initDemo } from './demo';
 import { $, $$ } from './dom';
+import { initSetup } from './setup';
 
 const viewport = $('#viewport');
 const world = $('#world');
@@ -164,7 +165,8 @@ for (const trigger of $$('[data-next]')) {
 
 document.addEventListener('keydown', (event) => {
   if (!camera.enabled || event.metaKey || event.ctrlKey || event.altKey) return;
-  if ((event.target as Element).closest('input, textarea, [role="listbox"]')) return;
+  if ((event.target as Element).closest('input, textarea, [role="listbox"], [role="radiogroup"]'))
+    return;
   if (event.key === 'ArrowRight') step(1);
   else if (event.key === 'ArrowLeft') step(-1);
   else if (event.key === '+' || event.key === '=') camera.zoomAt(1.25, ...center());
@@ -248,6 +250,7 @@ for (const button of $$<HTMLButtonElement>('[data-copy]')) {
 }
 
 initDemo(drawLinks);
+initSetup();
 document.fonts.ready.then(() => {
   applyMode();
   new ResizeObserver(drawLinks).observe($('#stage'));

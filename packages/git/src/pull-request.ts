@@ -7,7 +7,7 @@ import {
   type PullRequestContext,
   PullRequestContextSchema,
   type ReviewSnapshot,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 import { type GitRunner, git } from './commands';
 import { snapshotTrees } from './snapshot';
 
@@ -81,7 +81,7 @@ export const capturePullRequest = async (
   const context = PullRequestContextSchema.parse(input);
   if ((await githubRepository(root)).toLowerCase() !== context.repository.toLowerCase())
     throw new Error('PR repository does not match this checkout origin.');
-  const dir = await mkdtemp(join(tmpdir(), 'reviewlab-pr-'));
+  const dir = await mkdtemp(join(tmpdir(), 'hunkyard-pr-'));
   try {
     await run(dir, 'init', '--bare', '--template=', '.');
     const remote = `https://github.com/${context.repository}.git`;

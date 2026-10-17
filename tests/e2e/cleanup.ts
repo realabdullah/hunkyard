@@ -12,9 +12,9 @@ export default async () => {
     // The descriptor can authorize removal only of this suite's disposable top-level temp directories.
     if (
       dirname(relative(tmpdir(), record.root)) !== '.' ||
-      !basename(record.root).startsWith('reviewlab-test-') ||
+      !basename(record.root).startsWith('hunkyard-test-') ||
       dirname(relative(tmpdir(), config)) !== '.' ||
-      !basename(config).startsWith('reviewlab-e2e-config-')
+      !basename(config).startsWith('hunkyard-e2e-config-')
     )
       throw new Error('Invalid disposable fixture cleanup paths.');
     await rm(record.root, { recursive: true, force: true });

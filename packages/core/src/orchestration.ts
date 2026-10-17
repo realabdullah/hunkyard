@@ -14,7 +14,7 @@ import {
   type ReviewSession,
   validateFindings,
   validateTarget,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 import type { ReviewAgent } from './ports';
 
 export const createReviewPlan = (target: ModelTarget, options: unknown): ReviewPlan => {

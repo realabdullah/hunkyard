@@ -1,4 +1,4 @@
-import type { Finding, FindingStatus } from '@reviewlab/domain';
+import type { Finding, FindingStatus } from '@hunkyard/domain';
 import { useState } from 'react';
 import {
   agentMeta,

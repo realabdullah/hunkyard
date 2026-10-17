@@ -3,24 +3,24 @@ import { mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createCorrectnessReviewer, createLocalEmbedder } from '@reviewlab/agents';
-import { collectContext, loadTarget, resolvePolicy, withSharedPolicy } from '@reviewlab/context';
+import { createCorrectnessReviewer, createLocalEmbedder } from '@hunkyard/agents';
+import { collectContext, loadTarget, resolvePolicy, withSharedPolicy } from '@hunkyard/context';
 import {
   createReviewPlan,
   createReviewService,
   effectivenessAnalytics,
   recommendPresets,
-} from '@reviewlab/core';
+} from '@hunkyard/core';
 import {
   emptyInteraction,
   ModelTargetSchema,
   ReviewOptionsSchema,
   ShareablePolicySchema,
   WorkflowSchema,
-} from '@reviewlab/domain';
-import { captureStaged, runBytes, treeEntries } from '@reviewlab/git';
-import { createRuntime } from '@reviewlab/server/runtime';
-import { createSqliteSessionStore } from '@reviewlab/storage';
+} from '@hunkyard/domain';
+import { captureStaged, runBytes, treeEntries } from '@hunkyard/git';
+import { createRuntime } from '@hunkyard/server/runtime';
+import { createSqliteSessionStore } from '@hunkyard/storage';
 import {
   assertExtensionAccess,
   assertExternalExecutable,
@@ -28,7 +28,7 @@ import {
   resolveExecutable,
   runCli,
   trustedExecutable,
-} from 'reviewlab-vscode/bridge';
+} from 'hunkyard-vscode/bridge';
 import { expect, test } from 'vitest';
 import { createGitFixture } from './git-fixture';
 import { benchmarkCases, benchmarkFinding } from './phase-four-fixtures';
@@ -190,9 +190,9 @@ test('shared policies cannot supply privacy or endpoints; explicit grant freezes
   expect(policy.instructions).toEqual([]);
   expect(enriched.hash).not.toBe(policy.hash);
   const fixture = await createGitFixture();
-  const directory = await mkdtemp(join(tmpdir(), 'reviewlab-power-config-'));
-  const old = process.env.REVIEWLAB_USER_CONFIG;
-  process.env.REVIEWLAB_USER_CONFIG = join(directory, 'config.json');
+  const directory = await mkdtemp(join(tmpdir(), 'hunkyard-power-config-'));
+  const old = process.env.HUNKYARD_USER_CONFIG;
+  process.env.HUNKYARD_USER_CONFIG = join(directory, 'config.json');
   try {
     await expect(
       createRuntime(fixture.root, { sharedPolicy: { policy: shared, granted: false } }),
@@ -213,8 +213,8 @@ test('shared policies cannot supply privacy or endpoints; explicit grant freezes
     expect((await reopened.service.get(session.id))?.policy.exclusions).toContain('private/**');
     await reopened.close();
   } finally {
-    if (old === undefined) delete process.env.REVIEWLAB_USER_CONFIG;
-    else process.env.REVIEWLAB_USER_CONFIG = old;
+    if (old === undefined) delete process.env.HUNKYARD_USER_CONFIG;
+    else process.env.HUNKYARD_USER_CONFIG = old;
     await fixture.dispose();
     await rm(directory, { recursive: true, force: true });
   }
@@ -304,9 +304,9 @@ test('local embedding gateway blocks remote/redirected egress and malformed vect
 
 test('semantic retrieval uses frozen, excluded-filtered and redacted sources with bounded excerpts; disabled means zero requests', async () => {
   const fixture = await createGitFixture();
-  const directory = await mkdtemp(join(tmpdir(), 'reviewlab-semantic-'));
-  const old = process.env.REVIEWLAB_USER_CONFIG;
-  process.env.REVIEWLAB_USER_CONFIG = join(directory, 'config.json');
+  const directory = await mkdtemp(join(tmpdir(), 'hunkyard-semantic-'));
+  const old = process.env.HUNKYARD_USER_CONFIG;
+  process.env.HUNKYARD_USER_CONFIG = join(directory, 'config.json');
   try {
     await writeFile(join(fixture.root, 'related.ts'), 'export const rotate = () => "expiry";\n');
     await writeFile(join(fixture.root, 'private.ts'), 'export const privateValue = 1;\n');
@@ -349,8 +349,8 @@ test('semantic retrieval uses frozen, excluded-filtered and redacted sources wit
     expect(context.entries?.some((entry) => entry.path === 'private.ts')).toBe(false);
     expect(context.semantic?.candidates).toBe(1);
   } finally {
-    if (old === undefined) delete process.env.REVIEWLAB_USER_CONFIG;
-    else process.env.REVIEWLAB_USER_CONFIG = old;
+    if (old === undefined) delete process.env.HUNKYARD_USER_CONFIG;
+    else process.env.HUNKYARD_USER_CONFIG = old;
     await fixture.dispose();
     await rm(directory, { recursive: true, force: true });
   }
@@ -434,22 +434,22 @@ test('effectiveness analytics separate unjudged, preference and false-positive o
 test('extension refuses untrusted/virtual workspaces and executables inside the workspace, including symlinks', async () => {
   expect(() => assertExtensionAccess(false, 'file')).toThrow(/trusted/);
   expect(() => assertExtensionAccess(true, 'vscode-vfs')).toThrow();
-  expect(() => trustedExecutable('./bin/reviewlab')).toThrow(/absolute/);
+  expect(() => trustedExecutable('./bin/hunkyard')).toThrow(/absolute/);
   const fixture = await createGitFixture();
-  const directory = await mkdtemp(join(tmpdir(), 'reviewlab-vscode-'));
+  const directory = await mkdtemp(join(tmpdir(), 'hunkyard-vscode-'));
   try {
     expect(() =>
-      assertExternalExecutable(fixture.root, join(fixture.root, '..tools', 'reviewlab')),
+      assertExternalExecutable(fixture.root, join(fixture.root, '..tools', 'hunkyard')),
     ).toThrow(/outside/);
-    const previousConfig = process.env.REVIEWLAB_USER_CONFIG;
-    process.env.REVIEWLAB_USER_CONFIG = join(fixture.root, '..private', 'config.json');
+    const previousConfig = process.env.HUNKYARD_USER_CONFIG;
+    process.env.HUNKYARD_USER_CONFIG = join(fixture.root, '..private', 'config.json');
     try {
       await expect(loadTarget(fixture.root)).rejects.toThrow(/outside/);
     } finally {
-      if (previousConfig === undefined) delete process.env.REVIEWLAB_USER_CONFIG;
-      else process.env.REVIEWLAB_USER_CONFIG = previousConfig;
+      if (previousConfig === undefined) delete process.env.HUNKYARD_USER_CONFIG;
+      else process.env.HUNKYARD_USER_CONFIG = previousConfig;
     }
-    const executable = join(fixture.root, 'reviewlab');
+    const executable = join(fixture.root, 'hunkyard');
     await writeFile(executable, 'not executable');
     const alias = join(directory, 'alias');
     await symlink(executable, alias);
@@ -463,7 +463,7 @@ test('extension refuses untrusted/virtual workspaces and executables inside the 
 
 test('extension bridge invokes installed ESM CLI through explicit Node without shell interpolation and stops on dispose', async () => {
   const fixture = await createGitFixture();
-  const directory = await mkdtemp(join(tmpdir(), 'reviewlab-cli-bridge-'));
+  const directory = await mkdtemp(join(tmpdir(), 'hunkyard-cli-bridge-'));
   try {
     const script = join(directory, 'installed cli.mjs');
     await writeFile(script, 'console.log(JSON.stringify(process.argv.slice(2)));');

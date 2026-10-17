@@ -1,4 +1,4 @@
-import { type ModelTarget, OllamaChatChunkSchema, OpenAIChatChunkSchema } from '@reviewlab/domain';
+import { type ModelTarget, OllamaChatChunkSchema, OpenAIChatChunkSchema } from '@hunkyard/domain';
 
 /** A piece of answer text, or the end of the stream with how it ended. */
 export type ChatDelta = { text: string } | { done: true; truncated: boolean };

@@ -2,12 +2,12 @@ import { createHash } from 'node:crypto';
 import * as fs from 'node:fs/promises';
 import { readFile, symlink, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { createConversationResponder } from '@reviewlab/agents';
-import { createReviewService } from '@reviewlab/core';
-import { type Interaction, type ModelTarget } from '@reviewlab/domain';
-import { captureSnapshot, captureStaged, createPatchAdapter } from '@reviewlab/git';
-import { withSessionRules } from '@reviewlab/server/context';
-import { createSqliteSessionStore } from '@reviewlab/storage';
+import { createConversationResponder } from '@hunkyard/agents';
+import { createReviewService } from '@hunkyard/core';
+import { type Interaction, type ModelTarget } from '@hunkyard/domain';
+import { captureSnapshot, captureStaged, createPatchAdapter } from '@hunkyard/git';
+import { withSessionRules } from '@hunkyard/server/context';
+import { createSqliteSessionStore } from '@hunkyard/storage';
 import { expect, test, vi } from 'vitest';
 import { createGitFixture } from './git-fixture';
 
@@ -360,7 +360,7 @@ test('an editor recreating the destination during publication wins; both byte st
     const result = await f.service.interaction.apply(f.session.id, patch.id, approval);
     expect(result.patches[0]?.status).toBe('conflict');
     expect(await readFile(join(f.root, 'example.ts'), 'utf8')).toBe('editor-created replacement\n');
-    expect(await readFile(join(f.root, `example.ts.reviewlab-${patch.id}.bak`), 'utf8')).toBe(
+    expect(await readFile(join(f.root, `example.ts.hunkyard-${patch.id}.bak`), 'utf8')).toBe(
       'export const value = 2;\n',
     );
   } finally {
@@ -427,7 +427,7 @@ test('rule consent changes only future frozen inputs and targeted recapture neve
       f.service.interaction.propose(f.session.id, {
         revision: (await f.service.interaction.read(f.session.id)).revision,
         runId,
-        file: '.reviewlab/config.json',
+        file: '.hunkyard/config.json',
         replacement: '{}',
       }),
     ).rejects.toThrow();

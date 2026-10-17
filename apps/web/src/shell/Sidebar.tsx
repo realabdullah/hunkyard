@@ -1,4 +1,4 @@
-import type { SessionSummary } from '@reviewlab/domain';
+import type { SessionSummary } from '@hunkyard/domain';
 import { useMemo } from 'react';
 import { ago, isLive, providerMeta, sessionTitle } from '../lib/meta';
 import { useWorkspace } from '../lib/workspace';
@@ -43,7 +43,7 @@ export const Sidebar = ({
         <BrandMark />
         <div className="sidebar-repo">
           <strong>{name || 'This repository'}</strong>
-          <small>ReviewLab</small>
+          <small>Hunkyard</small>
         </div>
         <IconButton icon="sidebar" label="Hide sidebar" onClick={collapse} />
       </div>

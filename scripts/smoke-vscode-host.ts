@@ -5,10 +5,10 @@ import { join, resolve } from 'node:path';
 import { promisify } from 'node:util';
 
 const execute = promisify(execFile);
-const directory = await mkdtemp(join(tmpdir(), 'reviewlab-vscode-host-'));
+const directory = await mkdtemp(join(tmpdir(), 'hunkyard-vscode-host-'));
 try {
   const result = await execute(
-    process.env.REVIEWLAB_VSCODE_EXECUTABLE ?? 'code',
+    process.env.HUNKYARD_VSCODE_EXECUTABLE ?? 'code',
     [
       '--new-window',
       '--disable-workspace-trust',

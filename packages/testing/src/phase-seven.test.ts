@@ -2,13 +2,13 @@ import { createHash } from 'node:crypto';
 import { mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createPluginReviewer, type ReviewAgent } from '@reviewlab/agents';
-import { loadTarget, migrateUserConfig, updateConfig } from '@reviewlab/context';
-import { createReviewService } from '@reviewlab/core';
-import { ModelTargetSchema, PluginManifestSchema } from '@reviewlab/domain';
-import { captureStaged } from '@reviewlab/git';
-import { createRuntime } from '@reviewlab/server/runtime';
-import { backupHistory, createSqliteSessionStore, restoreHistory } from '@reviewlab/storage';
+import { createPluginReviewer, type ReviewAgent } from '@hunkyard/agents';
+import { loadTarget, migrateUserConfig, updateConfig } from '@hunkyard/context';
+import { createReviewService } from '@hunkyard/core';
+import { ModelTargetSchema, PluginManifestSchema } from '@hunkyard/domain';
+import { captureStaged } from '@hunkyard/git';
+import { createRuntime } from '@hunkyard/server/runtime';
+import { backupHistory, createSqliteSessionStore, restoreHistory } from '@hunkyard/storage';
 import { expect, test, vi } from 'vitest';
 import { createGitFixture } from './git-fixture';
 import { fixtureSnapshot } from './replay';
@@ -86,7 +86,7 @@ test('config migrations preserve explicit consent, refuse unknown versions and n
 
 test('consistent backup restores immutable runs and interactions; refuses overwrite, corrupt input and wrong repository', async () => {
   const fixture = await createGitFixture();
-  const temporary = await mkdtemp(join(tmpdir(), 'reviewlab-recovery-'));
+  const temporary = await mkdtemp(join(tmpdir(), 'hunkyard-recovery-'));
   try {
     await writeFile(join(fixture.root, 'example.ts'), 'export const value = 2;\n');
     await fixture.git('add', 'example.ts');
@@ -148,7 +148,7 @@ test('consistent backup restores immutable runs and interactions; refuses overwr
     } finally {
       await other.dispose();
     }
-    await rename(join(root, '.reviewlab/sqlite'), join(root, '.reviewlab/preserved'));
+    await rename(join(root, '.hunkyard/sqlite'), join(root, '.hunkyard/preserved'));
     const corrupt = join(temporary, 'corrupt.db');
     await writeFile(corrupt, 'not sqlite');
     await expect(restoreHistory(root, corrupt)).rejects.toThrow();
@@ -167,10 +167,10 @@ test('consistent backup restores immutable runs and interactions; refuses overwr
 
 test('runtime freezes a granted manifest and config writes preserve the unversioned original without expanding consent', async () => {
   const fixture = await createGitFixture();
-  const directory = await mkdtemp(join(tmpdir(), 'reviewlab-config-migration-'));
+  const directory = await mkdtemp(join(tmpdir(), 'hunkyard-config-migration-'));
   const config = join(directory, 'config.json');
   const original = JSON.stringify({ rules: ['Keep public APIs typed.'], cloudConsent: {} });
-  vi.stubEnv('REVIEWLAB_USER_CONFIG', config);
+  vi.stubEnv('HUNKYARD_USER_CONFIG', config);
   try {
     await writeFile(config, original);
     await loadTarget(fixture.root);

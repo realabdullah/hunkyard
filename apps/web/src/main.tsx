@@ -26,7 +26,7 @@ const Shell = () => {
   const { view, go, sessions, disconnect } = useWorkspace();
   const [palette, setPalette] = useState(false);
   const [help, setHelp] = useState(false);
-  const [hidden, setHidden] = useStoredState('reviewlab.sidebarHidden', false);
+  const [hidden, setHidden] = useStoredState('hunkyard.sidebarHidden', false);
   useHotkeys({
     'mod+k': () => setPalette((open) => !open),
     n: () => go({ kind: 'home' }),
@@ -128,7 +128,7 @@ const App = () => {
 
 initTheme();
 const root = document.getElementById('root');
-if (!root) throw new Error('ReviewLab root element is missing.');
+if (!root) throw new Error('Hunkyard root element is missing.');
 createRoot(root).render(
   <React.StrictMode>
     <App />

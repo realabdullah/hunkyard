@@ -11,7 +11,7 @@ export const eventStream = (path: string, signal: AbortSignal, init?: RequestIni
     ...init,
     headers: {
       authorization: `Bearer ${token}`,
-      'x-reviewlab-csrf': '1',
+      'x-hunkyard-csrf': '1',
       ...(init?.body ? { 'content-type': 'application/json' } : {}),
     },
     signal,
@@ -56,7 +56,7 @@ export const api = async <T>(path: string, init?: RequestInit): Promise<T> => {
     ...init,
     headers: {
       authorization: `Bearer ${token}`,
-      'x-reviewlab-csrf': '1',
+      'x-hunkyard-csrf': '1',
       'content-type': 'application/json',
       ...init?.headers,
     },

@@ -4,7 +4,7 @@ import {
   parsePullRequest,
   profileAgents,
   type ReviewSession,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 import { useState } from 'react';
 import { api } from '../api';
 import { useHotkeys } from '../lib/hooks';
@@ -66,7 +66,7 @@ export const Launchpad = () => {
     if (busy || !plan) return;
     if (source === 'github') {
       if (githubBlocked)
-        return toast('GitHub access is off while ReviewLab is local-only.', 'error');
+        return toast('GitHub access is off while Hunkyard is local-only.', 'error');
       if (!githubConsent) return toast('Allow GitHub read access for this capture first.', 'error');
       void act(async () => {
         const { repository } = await api<{ repository: string }>('/github/repository');
@@ -272,7 +272,7 @@ export const Launchpad = () => {
           <div className="launch-drawer">
             {githubBlocked ? (
               <p className="note is-warn">
-                <Icon name="lock" size={14} /> GitHub is blocked while ReviewLab is local-only.{' '}
+                <Icon name="lock" size={14} /> GitHub is blocked while Hunkyard is local-only.{' '}
                 <button type="button" className="link" onClick={() => go({ kind: 'settings' })}>
                   Change privacy
                 </button>

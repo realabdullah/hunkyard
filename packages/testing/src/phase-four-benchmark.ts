@@ -1,16 +1,16 @@
 import { createHash } from 'node:crypto';
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { createCorrectnessReviewer } from '@reviewlab/agents';
-import { createReviewService } from '@reviewlab/core';
+import { createCorrectnessReviewer } from '@hunkyard/agents';
+import { createReviewService } from '@hunkyard/core';
 import {
   type ModelTarget,
   ModelTargetSchema,
   type ReviewOptions,
   ReviewOptionsSchema,
-} from '@reviewlab/domain';
-import { captureStaged } from '@reviewlab/git';
-import { createSqliteSessionStore } from '@reviewlab/storage';
+} from '@hunkyard/domain';
+import { captureStaged } from '@hunkyard/git';
+import { createSqliteSessionStore } from '@hunkyard/storage';
 import { createGitFixture } from './git-fixture';
 import { benchmarkCases, scriptedReviewer } from './phase-four-fixtures';
 

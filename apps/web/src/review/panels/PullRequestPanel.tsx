@@ -1,4 +1,4 @@
-import type { Interaction, Publication } from '@reviewlab/domain';
+import type { Interaction, Publication } from '@hunkyard/domain';
 import { useState } from 'react';
 import { api } from '../../api';
 import { isLive, runIdOf, severityMeta, shortSha, statusMeta } from '../../lib/meta';
@@ -36,7 +36,7 @@ export const PullRequestPanel = () => {
       </div>
       <p className="note">
         This is a saved copy. Remote changes appear only after an explicit refresh. External gates
-        (like Qodo or your org’s review) still need to happen on GitHub — ReviewLab can’t certify
+        (like Qodo or your org’s review) still need to happen on GitHub — Hunkyard can’t certify
         them.
       </p>
       {headChanged && (

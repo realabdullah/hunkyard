@@ -1,4 +1,4 @@
-import type { Finding, FindingStatus, Interaction } from '@reviewlab/domain';
+import type { Finding, FindingStatus, Interaction } from '@hunkyard/domain';
 export const effectiveStatus = (
   state: Interaction,
   runId: string,

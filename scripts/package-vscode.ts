@@ -29,9 +29,9 @@ await writeFile(
 );
 await writeFile(
   `${root}/extension.vsixmanifest`,
-  `<?xml version="1.0"?><PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011"><Metadata><Identity Language="en-US" Id="reviewlab-vscode" Version="0.1.1" Publisher="reviewlab"/><DisplayName>ReviewLab</DisplayName><Description xml:space="preserve">Local-first explicit Git reviews</Description><Tags>review</Tags><Categories>Other</Categories><GalleryFlags>Public</GalleryFlags><Properties><Property Id="Microsoft.VisualStudio.Code.Engine" Value="^1.95.0"/><Property Id="Microsoft.VisualStudio.Code.ExtensionKind" Value="workspace"/></Properties></Metadata><Installation><InstallationTarget Id="Microsoft.VisualStudio.Code"/></Installation><Dependencies/><Assets><Asset Type="Microsoft.VisualStudio.Code.Manifest" Path="extension/package.json" Addressable="true"/></Assets></PackageManifest>`,
+  `<?xml version="1.0"?><PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011"><Metadata><Identity Language="en-US" Id="hunkyard-vscode" Version="0.1.1" Publisher="hunkyard"/><DisplayName>Hunkyard</DisplayName><Description xml:space="preserve">Local-first explicit Git reviews</Description><Tags>review</Tags><Categories>Other</Categories><GalleryFlags>Public</GalleryFlags><Properties><Property Id="Microsoft.VisualStudio.Code.Engine" Value="^1.95.0"/><Property Id="Microsoft.VisualStudio.Code.ExtensionKind" Value="workspace"/></Properties></Metadata><Installation><InstallationTarget Id="Microsoft.VisualStudio.Code"/></Installation><Dependencies/><Assets><Asset Type="Microsoft.VisualStudio.Code.Manifest" Path="extension/package.json" Addressable="true"/></Assets></PackageManifest>`,
 );
-const archive = resolve('dist/reviewlab-vscode-0.1.1.zip');
+const archive = resolve('dist/hunkyard-vscode-0.1.1.zip');
 await rm(archive, { force: true });
 if (process.platform === 'win32') {
   execFileSync(
@@ -40,9 +40,9 @@ if (process.platform === 'win32') {
       '-NoProfile',
       '-NonInteractive',
       '-Command',
-      "Compress-Archive -LiteralPath @((Join-Path $env:REVIEWLAB_VSIX_ROOT 'extension'),(Join-Path $env:REVIEWLAB_VSIX_ROOT '[Content_Types].xml'),(Join-Path $env:REVIEWLAB_VSIX_ROOT 'extension.vsixmanifest')) -DestinationPath $env:REVIEWLAB_VSIX_ARCHIVE",
+      "Compress-Archive -LiteralPath @((Join-Path $env:HUNKYARD_VSIX_ROOT 'extension'),(Join-Path $env:HUNKYARD_VSIX_ROOT '[Content_Types].xml'),(Join-Path $env:HUNKYARD_VSIX_ROOT 'extension.vsixmanifest')) -DestinationPath $env:HUNKYARD_VSIX_ARCHIVE",
     ],
-    { env: { ...process.env, REVIEWLAB_VSIX_ROOT: root, REVIEWLAB_VSIX_ARCHIVE: archive } },
+    { env: { ...process.env, HUNKYARD_VSIX_ROOT: root, HUNKYARD_VSIX_ARCHIVE: archive } },
   );
 } else
   execFileSync(
@@ -50,7 +50,7 @@ if (process.platform === 'win32') {
     ['-q', '-r', archive, 'extension', '[Content_Types].xml', 'extension.vsixmanifest'],
     { cwd: root },
   );
-const destination = resolve('dist/reviewlab-vscode-0.1.1.vsix');
+const destination = resolve('dist/hunkyard-vscode-0.1.1.vsix');
 await rm(destination, { force: true });
 await rename(archive, destination);
 console.log(

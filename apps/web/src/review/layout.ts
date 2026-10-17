@@ -1,4 +1,4 @@
-import type { AgentId, Finding, ReviewSession } from '@reviewlab/domain';
+import type { AgentId, Finding, ReviewSession } from '@hunkyard/domain';
 import { severityMeta, sortFindings } from '../lib/meta';
 import { squarify, type Tile } from './treemap';
 

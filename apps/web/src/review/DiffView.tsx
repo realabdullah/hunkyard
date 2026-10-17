@@ -1,4 +1,4 @@
-import type { Finding, ReviewSnapshot } from '@reviewlab/domain';
+import type { Finding, ReviewSnapshot } from '@hunkyard/domain';
 import { useEffect, useMemo, useState } from 'react';
 import { type DiffLine, diffLines } from '../diff-lines';
 import { severityMeta } from '../lib/meta';

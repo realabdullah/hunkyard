@@ -10,12 +10,12 @@ import { createGitFixture } from '../packages/testing/src/git-fixture';
 const execute = promisify(execFile);
 const pnpm = process.env.npm_execpath;
 if (!pnpm) throw new Error('Run through pnpm smoke:release.');
-const temporary = await mkdtemp(join(tmpdir(), 'reviewlab-release-'));
+const temporary = await mkdtemp(join(tmpdir(), 'hunkyard-release-'));
 const fixture = await createGitFixture();
 try {
   const config = join(temporary, 'config.json');
-  const env: NodeJS.ProcessEnv = { ...process.env, REVIEWLAB_USER_CONFIG: config };
-  delete env.REVIEWLAB_REPO;
+  const env: NodeJS.ProcessEnv = { ...process.env, HUNKYARD_USER_CONFIG: config };
+  delete env.HUNKYARD_REPO;
   await writeFile(join(temporary, 'package.json'), '{"private":true}');
   await execute(process.execPath, [
     pnpm,
@@ -32,15 +32,12 @@ try {
     [pnpm, '--dir', temporary, 'add', join(temporary, archive), '--offline', '--ignore-scripts'],
     { env, timeout: 30000 },
   );
-  const installed = join(temporary, 'node_modules/@reviewlab/cli');
+  const installed = join(temporary, 'node_modules/@hunkyard/cli');
   const cli = join(installed, 'cli.mjs');
   const run = (...args: string[]) =>
     execute(process.execPath, [cli, ...args, '--repo', fixture.root], { env, timeout: 30000 });
-  assert.match((await run('--help')).stdout, /ReviewLab/);
-  assert.match(
-    await readFile(join(installed, 'README.md'), 'utf8'),
-    /# ReviewLab/,
-  );
+  assert.match((await run('--help')).stdout, /Hunkyard/);
+  assert.match(await readFile(join(installed, 'README.md'), 'utf8'), /# Hunkyard/);
   assert.equal(
     JSON.parse(
       (
@@ -73,7 +70,7 @@ try {
   assert.equal(JSON.parse(await readFile(config, 'utf8')).version, 1);
   assert.deepEqual(JSON.parse((await run('sessions', '--json')).stdout), []);
   await run('backup', '--file', join(temporary, 'history.db'));
-  await rm(join(fixture.root, '.reviewlab/sqlite'), { recursive: true });
+  await rm(join(fixture.root, '.hunkyard/sqlite'), { recursive: true });
   assert.equal(
     JSON.parse((await run('restore', '--file', join(temporary, 'history.db'))).stdout).restored,
     0,
@@ -90,9 +87,7 @@ try {
   await mkdir(nested, { recursive: true });
   // Exercise the installed command and cwd discovery without an explicit subcommand/repo.
   const child = spawn(
-    process.platform === 'win32'
-      ? process.execPath
-      : join(temporary, 'node_modules/.bin/reviewlab'),
+    process.platform === 'win32' ? process.execPath : join(temporary, 'node_modules/.bin/hunkyard'),
     [...(process.platform === 'win32' ? [cli] : []), '--no-browser', '--port', String(port)],
     { env, cwd: nested },
   );

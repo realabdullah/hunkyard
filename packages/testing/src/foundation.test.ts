@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto';
 import { readFile, rename, symlink, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { createReviewService } from '@reviewlab/core';
-import { captureStaged } from '@reviewlab/git';
-import { createFileSessionStore } from '@reviewlab/storage';
+import { createReviewService } from '@hunkyard/core';
+import { captureStaged } from '@hunkyard/git';
+import { createFileSessionStore } from '@hunkyard/storage';
 import { describe, expect, test } from 'vitest';
 import { createGitFixture, createReplayReviewer, fixtureSnapshot } from './index';
 

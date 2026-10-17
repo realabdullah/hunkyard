@@ -1,9 +1,9 @@
 {
-  "name": "@reviewlab/agents",
+  "name": "@hunkyard/agents",
   "version": "0.1.0",
   "type": "module",
   "exports": "./src/index.ts",
   "dependencies": {
-    "@reviewlab/domain": "workspace:*"
+    "@hunkyard/domain": "workspace:*"
   }
 }

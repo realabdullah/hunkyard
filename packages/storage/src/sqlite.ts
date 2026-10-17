@@ -9,12 +9,13 @@ import {
   InteractionSchema,
   type ReviewSession,
   SessionSchema,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 import type { DurableStore } from './durable-types';
 import { createFileSessionStore, validateSessionIntegrity, validateSnapshot } from './file-store';
 import { absent, getSession, transaction, withDatabase, writeSession } from './sqlite-database';
 import { alive, appendEvent, cleanup, journal, runKey, terminal } from './sqlite-journal';
 import { readRun } from './sqlite-runs';
+import { stateDirectory } from './state-directory';
 
 export const createSqliteSessionStore = (root: string): DurableStore => {
   let leaseToken: string | undefined;
@@ -136,7 +137,7 @@ export const createSqliteSessionStore = (root: string): DurableStore => {
               ?.digest !== digest
           )
             throw new Error(
-              'JSON history has not been migrated or changed since migration. Run migrate-history before opening ReviewLab.',
+              'JSON history has not been migrated or changed since migration. Run migrate-history before opening Hunkyard.',
             );
         }
       });
@@ -194,7 +195,7 @@ export const createSqliteSessionStore = (root: string): DurableStore => {
           const owner = db.prepare('SELECT pid FROM runtime_lease WHERE id = 1').get();
           if (typeof owner?.pid === 'number' && alive(owner.pid))
             throw new Error(
-              'Another ReviewLab runtime owns this repository. Stop it before opening another runtime.',
+              'Another Hunkyard runtime owns this repository. Stop it before opening another runtime.',
             );
           db.prepare(
             'INSERT INTO runtime_lease VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET pid = excluded.pid, token = excluded.token',
@@ -320,7 +321,7 @@ const sourceHistory = async (root: string) => {
   // Validate every source record before opening the destination. Never modify/delete inputs.
   let files: string[];
   try {
-    const source = join(root, '.reviewlab', 'sessions-v2');
+    const source = join(await stateDirectory(root, 'sessions-v2'), 'sessions-v2');
     const stat = await lstat(source);
     if (!stat.isDirectory() || stat.isSymbolicLink())
       throw new Error('History directory must not be a symlink.');
@@ -353,7 +354,7 @@ export const migrateFileHistory = async (
       let unchanged = 0;
       const owner = db.prepare('SELECT pid FROM runtime_lease WHERE id = 1').get();
       if (typeof owner?.pid === 'number' && alive(owner.pid))
-        throw new Error('Stop the running ReviewLab runtime before migrating history.');
+        throw new Error('Stop the running Hunkyard runtime before migrating history.');
       for (const { session, digest } of sources) {
         if (
           session.snapshot.repoRoot !== root ||

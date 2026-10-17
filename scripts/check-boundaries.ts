@@ -34,7 +34,7 @@ for (const group of ['apps', 'packages']) {
           continue;
         }
         if (isBuiltin(specifier)) {
-          if (manifest.name === '@reviewlab/domain' || manifest.name === '@reviewlab/core') {
+          if (manifest.name === '@hunkyard/domain' || manifest.name === '@hunkyard/core') {
             throw new Error(`${file}: forbidden platform import ${specifier}`);
           }
           continue;
@@ -43,7 +43,7 @@ for (const group of ['apps', 'packages']) {
           ? specifier.split('/').slice(0, 2).join('/')
           : specifier.split('/')[0];
         // VS Code provides this module only inside its extension host.
-        if (packageName === 'vscode' && manifest.name === 'reviewlab-vscode') continue;
+        if (packageName === 'vscode' && manifest.name === 'hunkyard-vscode') continue;
         if (
           !packageName ||
           (!declared.includes(packageName) && !['vitest'].includes(packageName))

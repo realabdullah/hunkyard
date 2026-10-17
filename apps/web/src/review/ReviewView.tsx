@@ -14,7 +14,7 @@ export const ReviewView = ({ id }: { id: string }) => {
   const { latest, runs, active, historical, error, reload, chooseRun } = useSession(id);
   const { interaction, reloadInteraction } = useInteraction(active?.id, active?.revision);
   const { events } = useEvents(id, () => void reload());
-  const [mode, setMode] = useStoredState<'board' | 'triage'>('reviewlab.mode', 'board');
+  const [mode, setMode] = useStoredState<'board' | 'triage'>('hunkyard.mode', 'board');
   const [selection, setSelection] = useState<Selection | null>(null);
   const refresh = useCallback(async () => {
     await Promise.all([reload(), reloadInteraction()]);
@@ -420,7 +420,7 @@ const ExportDialog = ({ close }: { close: () => void }) => {
                 );
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = `reviewlab-${latest.id}${source ? '-source' : '-diagnostic'}.json`;
+                link.download = `hunkyard-${latest.id}${source ? '-source' : '-diagnostic'}.json`;
                 link.click();
                 setTimeout(() => URL.revokeObjectURL(url), 1000);
                 close();

@@ -5,7 +5,7 @@ import {
   providerDefaults,
   type ReviewOptions,
   type ReviewPlan,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 import { useState } from 'react';
 import { agentMeta, providerMeta } from '../lib/meta';
 import { Icon } from '../ui/Icon';

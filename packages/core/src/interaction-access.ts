@@ -1,4 +1,4 @@
-import type { Interaction, ReviewSession } from '@reviewlab/domain';
+import type { Interaction, ReviewSession } from '@hunkyard/domain';
 export type InteractionAccess = {
   serial: <T>(operation: () => Promise<T>) => Promise<T>;
   writable: () => void;

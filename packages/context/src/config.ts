@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { constants } from 'node:fs';
+import { constants, existsSync } from 'node:fs';
 import {
   copyFile,
   lstat,
@@ -17,11 +17,17 @@ import {
   ModelConfigSchema,
   type ModelTarget,
   ReviewOptionsSchema,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 import { migrateUserConfig } from './migrations';
 
-export const configPath = () =>
-  process.env.REVIEWLAB_USER_CONFIG || join(homedir(), '.config', 'reviewlab', 'config.json');
+/** User config (and stored provider keys beside it). Pre-rename `reviewlab` locations still work. */
+export const configPath = () => {
+  const override = process.env.HUNKYARD_USER_CONFIG || process.env.REVIEWLAB_USER_CONFIG;
+  if (override) return override;
+  const current = join(homedir(), '.config', 'hunkyard');
+  const legacy = join(homedir(), '.config', 'reviewlab');
+  return join(!existsSync(current) && existsSync(legacy) ? legacy : current, 'config.json');
+};
 const isMissing = (error: unknown) =>
   error instanceof Error && 'code' in error && error.code === 'ENOENT';
 export const readJson = async (path: string): Promise<unknown> => {

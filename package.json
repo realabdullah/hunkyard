@@ -1,13 +1,13 @@
 {
-  "name": "reviewlab-starter",
+  "name": "hunkyard",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.0.0",
   "scripts": {
     "dev": "concurrently -k \"pnpm dev:server\" \"pnpm dev:web\"",
     "dev:server": "tsx watch apps/cli/src/index.ts open --no-browser",
-    "dev:web": "pnpm --filter @reviewlab/web dev",
-    "dev:site": "pnpm --filter @reviewlab/site dev",
+    "dev:web": "pnpm --filter @hunkyard/web dev",
+    "dev:site": "pnpm --filter @hunkyard/site dev",
     "review": "tsx apps/cli/src/index.ts review --staged",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "biome check .",
@@ -18,9 +18,9 @@
     "check:boundaries": "tsx scripts/check-boundaries.ts",
     "check:secrets": "tsx scripts/check-secrets.ts",
     "check:commit": "tsx scripts/check-commit.ts",
-    "build": "pnpm --filter @reviewlab/web build",
+    "build": "pnpm --filter @hunkyard/web build",
     "check": "pnpm lint && pnpm typecheck && pnpm check:boundaries && pnpm check:secrets && pnpm test && pnpm build && pnpm test:e2e",
-    "reviewlab": "tsx apps/cli/src/index.ts",
+    "hunkyard": "tsx apps/cli/src/index.ts",
     "open": "tsx apps/cli/src/index.ts open",
     "package:release": "pnpm build && tsx scripts/package-release.ts",
     "smoke:release": "tsx scripts/smoke-release.ts",
@@ -40,7 +40,7 @@
     "vitest": "5.0.4"
   },
   "engines": {
-    "node": ">=22.22.0 <23",
+    "node": ">=22.22.0",
     "pnpm": "10.0.0"
   },
   "pnpm": {

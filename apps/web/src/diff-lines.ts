@@ -1,4 +1,4 @@
-import { diffSections, type ReviewSnapshot } from '@reviewlab/domain';
+import { diffSections, type ReviewSnapshot } from '@hunkyard/domain';
 
 export type DiffLine = {
   text: string;

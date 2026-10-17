@@ -1,4 +1,4 @@
-import { AgentIdSchema, type ReviewOptions, ReviewOptionsSchema } from '@reviewlab/domain';
+import { AgentIdSchema, type ReviewOptions, ReviewOptionsSchema } from '@hunkyard/domain';
 
 export const reviewOptionsFromArgs = (args: string[], defaults: ReviewOptions): ReviewOptions => {
   const value = (flag: string) => {

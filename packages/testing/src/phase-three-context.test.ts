@@ -2,12 +2,12 @@ import { createHash } from 'node:crypto';
 import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createCorrectnessReviewer } from '@reviewlab/agents';
-import { collectContext, loadTarget, resolvePolicy, scopedInstructions } from '@reviewlab/context';
-import { createReviewService } from '@reviewlab/core';
-import { matchesPath } from '@reviewlab/domain';
-import { captureSnapshot, runBytes, treeEntries } from '@reviewlab/git';
-import { createSqliteSessionStore } from '@reviewlab/storage';
+import { createCorrectnessReviewer } from '@hunkyard/agents';
+import { collectContext, loadTarget, resolvePolicy, scopedInstructions } from '@hunkyard/context';
+import { createReviewService } from '@hunkyard/core';
+import { matchesPath } from '@hunkyard/domain';
+import { captureSnapshot, runBytes, treeEntries } from '@hunkyard/git';
+import { createSqliteSessionStore } from '@hunkyard/storage';
 import { expect, test } from 'vitest';
 import { createGitFixture } from './git-fixture';
 
@@ -15,14 +15,14 @@ const setup = async (
   run: (fixture: Awaited<ReturnType<typeof createGitFixture>>) => Promise<void>,
 ) => {
   const fixture = await createGitFixture();
-  const directory = await mkdtemp(join(tmpdir(), 'reviewlab-context-test-'));
-  const previous = process.env.REVIEWLAB_USER_CONFIG;
-  process.env.REVIEWLAB_USER_CONFIG = join(directory, 'config.json');
+  const directory = await mkdtemp(join(tmpdir(), 'hunkyard-context-test-'));
+  const previous = process.env.HUNKYARD_USER_CONFIG;
+  process.env.HUNKYARD_USER_CONFIG = join(directory, 'config.json');
   try {
     await run(fixture);
   } finally {
-    if (previous === undefined) delete process.env.REVIEWLAB_USER_CONFIG;
-    else process.env.REVIEWLAB_USER_CONFIG = previous;
+    if (previous === undefined) delete process.env.HUNKYARD_USER_CONFIG;
+    else process.env.HUNKYARD_USER_CONFIG = previous;
     await fixture.dispose();
     await rm(directory, { recursive: true, force: true });
   }
@@ -37,7 +37,7 @@ test('nested adapters, Cursor globs, narrow Qodo TOML, explicit precedence and g
     await mkdir(join(root, 'src'));
     await mkdir(join(root, '.cursor/rules'), { recursive: true });
     await mkdir(join(root, '.github'));
-    await mkdir(join(root, '.reviewlab'));
+    await mkdir(join(root, '.hunkyard'));
     await writeFile(join(root, 'AGENTS.md'), 'Root rule');
     await writeFile(join(root, 'src/AGENTS.md'), 'Nested rule');
     await writeFile(join(root, 'CLAUDE.md'), 'Claude rule');
@@ -69,7 +69,7 @@ test('nested adapters, Cursor globs, narrow Qodo TOML, explicit precedence and g
     expect(first.diagnostics?.join(' ')).toContain('manual');
     expect(first.conflicts?.[0]?.resolution).toContain('owner inspection');
     await writeFile(
-      join(root, '.reviewlab/config.json'),
+      join(root, '.hunkyard/config.json'),
       JSON.stringify({ instructionOrder: ['src/AGENTS.md', 'AGENTS.md'] }),
     );
     const ordered = await resolvePolicy(root, paths);
@@ -78,7 +78,7 @@ test('nested adapters, Cursor globs, narrow Qodo TOML, explicit precedence and g
     ).toEqual(['src/AGENTS.md', 'AGENTS.md']);
     expect(ordered.hash).not.toBe(first.hash);
     await writeFile(
-      join(root, '.reviewlab/config.json'),
+      join(root, '.hunkyard/config.json'),
       JSON.stringify({ instructionSources: ['agents'] }),
     );
     expect((await resolvePolicy(root, paths)).sources.map((source) => source.path)).toEqual([
@@ -227,7 +227,7 @@ test('portable root-relative globs distinguish directories and support nested ma
 
 test('pruned Git navigation falls back visibly to retained sources when a saved snapshot is rerun', async () =>
   setup(async ({ root, git }) => {
-    const { buildFrozenContext } = await import('@reviewlab/server/context');
+    const { buildFrozenContext } = await import('@hunkyard/server/context');
     await writeFile(join(root, 'example.ts'), 'export const saved = 2;\n');
     await git('add', '.');
     const snapshot = await captureSnapshot(root);
@@ -246,7 +246,7 @@ test('pruned Git navigation falls back visibly to retained sources when a saved 
 
 test('staged-only cloud consent cannot authorize Phase3 related source; explicit renewed consent is required', async () =>
   setup(async ({ root }) => {
-    const { configPath, repositoryKey, updateConfig } = await import('@reviewlab/context');
+    const { configPath, repositoryKey, updateConfig } = await import('@hunkyard/context');
     await writeFile(
       configPath(),
       JSON.stringify({

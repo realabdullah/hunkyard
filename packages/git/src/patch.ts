@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { constants } from 'node:fs';
 import { link, lstat, mkdir, open, readFile, realpath, rename, unlink } from 'node:fs/promises';
 import { dirname, join, resolve, sep } from 'node:path';
-import { type PatchProposal, type ReviewSession } from '@reviewlab/domain';
+import { type PatchProposal, type ReviewSession, STATE_DIRECTORIES } from '@hunkyard/domain';
 import { git } from './commands';
 
 const digest = (bytes: Uint8Array | string) => createHash('sha256').update(bytes).digest('hex');
@@ -13,7 +13,7 @@ const safeFile = async (root: string, file: string) => {
     !path.startsWith(`${root}${sep}`) ||
     file.includes('\\') ||
     file.includes(':') ||
-    file.split('/').some((part) => ['..', '.', '.git', '.reviewlab', ''].includes(part))
+    file.split('/').some((part) => ['..', '.', '.git', '', ...STATE_DIRECTORIES].includes(part))
   )
     throw new Error('Unsafe patch path.');
   let current = root;
@@ -71,8 +71,8 @@ export const createPatchAdapter = (root: string) => ({
   },
   describe: (session: ReviewSession, proposal: PatchProposal, isolated: boolean) =>
     isolated
-      ? `Run git commit-tree ${session.snapshot.indexTree} to create an unreachable local commit object, then git worktree add --detach .reviewlab/experiments/${proposal.id} <object>. Disable checkout hooks, smudge/process filters, CRLF conversion and recursive submodules. Replace ${proposal.file} there and retain its backup. Your branch/index are preserved; no tests or push. Remove the worktree explicitly when finished.`
-      : `Replace only ${proposal.file} in ${root}. Retain original bytes at ${proposal.file}.reviewlab-${proposal.id}.bak. Index is unchanged. The path may be briefly absent; editor-created replacements cause refusal.`,
+      ? `Run git commit-tree ${session.snapshot.indexTree} to create an unreachable local commit object, then git worktree add --detach .hunkyard/experiments/${proposal.id} <object>. Disable checkout hooks, smudge/process filters, CRLF conversion and recursive submodules. Replace ${proposal.file} there and retain its backup. Your branch/index are preserved; no tests or push. Remove the worktree explicitly when finished.`
+      : `Replace only ${proposal.file} in ${root}. Retain original bytes at ${proposal.file}.hunkyard-${proposal.id}.bak. Index is unchanged. The path may be briefly absent; editor-created replacements cause refusal.`,
   apply: async (session: ReviewSession, proposal: PatchProposal, isolated: boolean) => {
     const repository = await realpath(root);
     if (
@@ -87,8 +87,8 @@ export const createPatchAdapter = (root: string) => ({
         'Remote PR snapshots cannot create a local experiment; use an explicitly prepared local checkout.',
       );
     if (isolated) {
-      const parent = join(repository, '.reviewlab', 'experiments');
-      for (const path of [join(repository, '.reviewlab'), parent]) {
+      const parent = join(repository, '.hunkyard', 'experiments');
+      for (const path of [join(repository, '.hunkyard'), parent]) {
         await mkdir(path, { recursive: true, mode: 0o700 });
         if ((await lstat(path)).isSymbolicLink() || (await realpath(path)) !== path)
           throw new Error('Unsafe worktree directory.');
@@ -99,13 +99,13 @@ export const createPatchAdapter = (root: string) => ({
         await git(
           root,
           '-c',
-          'user.name=ReviewLab',
+          'user.name=Hunkyard',
           '-c',
-          'user.email=local@reviewlab.invalid',
+          'user.email=local@hunkyard.invalid',
           'commit-tree',
           session.snapshot.indexTree,
           '-m',
-          'Approved ReviewLab isolated experiment',
+          'Approved Hunkyard isolated experiment',
         )
       ).trim();
       const hooks = join(parent, `${proposal.id}-disabled-hooks`);
@@ -148,8 +148,8 @@ export const createPatchAdapter = (root: string) => ({
     const path = await safeFile(destination, proposal.file);
     if (digest(await readFile(path)) !== proposal.baseHash)
       throw new Error('File hash conflict. Recompute the proposal; current edits were preserved.');
-    const backup = `${path}.reviewlab-${proposal.id}.bak`;
-    const temp = `${path}.reviewlab-${proposal.id}.tmp`;
+    const backup = `${path}.hunkyard-${proposal.id}.bak`;
+    const temp = `${path}.hunkyard-${proposal.id}.tmp`;
     const original = await lstat(path);
     const handle = await open(
       temp,

@@ -12,7 +12,7 @@ import {
   type ReviewSnapshot,
   redactSecrets,
   validateFindings,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 import { reviewerSystem } from './registry';
 
 export { agentRegistry } from './registry';
@@ -36,7 +36,7 @@ export { createModelGateway, validateTarget } from './transport';
 export type ReviewProgress = { stage: 'request' | 'response' | 'repair'; attempt: number };
 export type ReviewAgent = {
   review(input: {
-    plugin?: import('@reviewlab/domain').PluginManifest;
+    plugin?: import('@hunkyard/domain').PluginManifest;
     agentId?: AgentId;
     candidates?: FindingDraft[];
     reserve?: (input: number, output: number) => void;
@@ -60,7 +60,7 @@ const system = [
   'Use an empty findings array when no actionable defects are supported. No tools or filesystem writes are available.',
 ].join('\n');
 
-export { redactSecrets } from '@reviewlab/domain';
+export { redactSecrets } from '@hunkyard/domain';
 
 export const createCorrectnessReviewer = (
   transport?: ModelTransport,

@@ -1,9 +1,14 @@
-import { ReviewPlanSchema, type ReviewSession, SessionSchema } from '@reviewlab/domain';
+import { ReviewPlanSchema, type ReviewSession, SessionSchema } from '@hunkyard/domain';
 import * as vscode from 'vscode';
 import { assertExtensionAccess, frozenFindingSource, runCli, trustedExecutable } from './bridge';
 
+/** User-level value only; pre-rename `reviewlab.*` settings are read when the new key is unset. */
+const userSetting = (key: 'executable' | 'nodeExecutable') =>
+  vscode.workspace.getConfiguration('hunkyard').inspect<string>(key)?.globalValue ??
+  vscode.workspace.getConfiguration('reviewlab').inspect<string>(key)?.globalValue;
+
 export const activate = (context: vscode.ExtensionContext) => {
-  const output = vscode.window.createOutputChannel('ReviewLab');
+  const output = vscode.window.createOutputChannel('Hunkyard');
   const changed = new vscode.EventEmitter<void>();
   const lifecycle = new AbortController();
   let session: ReviewSession | undefined;
@@ -11,7 +16,7 @@ export const activate = (context: vscode.ExtensionContext) => {
   const documents = new Map<string, string>();
   const invoke = async (review: boolean) => {
     if (running) {
-      void vscode.window.showInformationMessage('A ReviewLab command is already running.');
+      void vscode.window.showInformationMessage('A Hunkyard command is already running.');
       return;
     }
     try {
@@ -20,15 +25,8 @@ export const activate = (context: vscode.ExtensionContext) => {
         folders.length === 1 ? folders[0] : await vscode.window.showWorkspaceFolderPick();
       if (!folder) return;
       assertExtensionAccess(vscode.workspace.isTrusted, folder.uri.scheme);
-      const configured = vscode.workspace
-        .getConfiguration('reviewlab')
-        .inspect<string>('executable');
-      const executable = trustedExecutable(configured?.globalValue);
-      const node = trustedExecutable(
-        vscode.workspace.getConfiguration('reviewlab').inspect<string>('nodeExecutable')
-          ?.globalValue,
-        'node',
-      );
+      const executable = trustedExecutable(userSetting('executable'));
+      const node = trustedExecutable(userSetting('nodeExecutable'), 'node');
       running = true;
       if (review) {
         const config = await runCli(
@@ -99,9 +97,9 @@ export const activate = (context: vscode.ExtensionContext) => {
       output.appendLine(
         `${session.status}: ${session.findings.length} findings. Run ${session.runId ?? session.id}. Sources are frozen; current editor lines may differ.`,
       );
-      await vscode.commands.executeCommand('reviewlab.findings.focus');
+      await vscode.commands.executeCommand('hunkyard.findings.focus');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'ReviewLab failed.';
+      const message = error instanceof Error ? error.message : 'Hunkyard failed.';
       output.appendLine(message);
       void vscode.window.showErrorMessage(message);
     } finally {
@@ -119,7 +117,7 @@ export const activate = (context: vscode.ExtensionContext) => {
         ? `${finding.explanation}\nEvidence: ${finding.evidence}\nRecommendation: ${finding.recommendation}`
         : '';
       item.command = {
-        command: 'reviewlab.openFinding',
+        command: 'hunkyard.openFinding',
         title: 'Open frozen source',
         arguments: [id],
       };
@@ -135,23 +133,23 @@ export const activate = (context: vscode.ExtensionContext) => {
     },
     output,
     changed,
-    vscode.window.registerTreeDataProvider('reviewlab.findings', tree),
-    vscode.workspace.registerTextDocumentContentProvider('reviewlab-snapshot', {
+    vscode.window.registerTreeDataProvider('hunkyard.findings', tree),
+    vscode.workspace.registerTextDocumentContentProvider('hunkyard-snapshot', {
       provideTextDocumentContent: (uri) =>
         documents.get(uri.toString()) ?? 'Frozen source no longer loaded. Reopen its review.',
     }),
-    vscode.commands.registerCommand('reviewlab.reviewStaged', () => invoke(true)),
-    vscode.commands.registerCommand('reviewlab.history', () => invoke(false)),
-    vscode.commands.registerCommand('reviewlab.clear', () => {
+    vscode.commands.registerCommand('hunkyard.reviewStaged', () => invoke(true)),
+    vscode.commands.registerCommand('hunkyard.history', () => invoke(false)),
+    vscode.commands.registerCommand('hunkyard.clear', () => {
       session = undefined;
       documents.clear();
       changed.fire();
     }),
-    vscode.commands.registerCommand('reviewlab.openFinding', async (id: string) => {
+    vscode.commands.registerCommand('hunkyard.openFinding', async (id: string) => {
       if (!session || !vscode.workspace.isTrusted) return;
       const source = frozenFindingSource(session, id);
       const uri = vscode.Uri.from({
-        scheme: 'reviewlab-snapshot',
+        scheme: 'hunkyard-snapshot',
         path: `/${session.runId ?? session.id}/${source.path}`,
         query: id,
       });

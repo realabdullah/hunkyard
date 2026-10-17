@@ -9,7 +9,7 @@ import {
   createLocalEmbedder,
   probeModel,
   probeModelCapabilities,
-} from '@reviewlab/agents';
+} from '@hunkyard/agents';
 import {
   loadAuthorizedProviderSecret,
   loadReviewOptions,
@@ -19,9 +19,9 @@ import {
   scopedInstructions,
   updateConfig,
   withSharedPolicy,
-} from '@reviewlab/context';
-import { createReviewService } from '@reviewlab/core';
-import type { ReviewServiceDependencies } from '@reviewlab/core/ports';
+} from '@hunkyard/context';
+import { createReviewService } from '@hunkyard/core';
+import type { ReviewServiceDependencies } from '@hunkyard/core/ports';
 import {
   type PluginManifest,
   PluginManifestSchema,
@@ -29,7 +29,7 @@ import {
   ReviewOptionsSchema,
   type ShareablePolicy,
   ShareablePolicySchema,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 import {
   capturePullRequest,
   captureSnapshot,
@@ -37,9 +37,9 @@ import {
   createPatchAdapter,
   getRepoRoot,
   githubRepository,
-} from '@reviewlab/git';
-import { createGitHubProvider, ghTransport } from '@reviewlab/providers';
-import { createSqliteSessionStore } from '@reviewlab/storage';
+} from '@hunkyard/git';
+import { createGitHubProvider, ghTransport } from '@hunkyard/providers';
+import { createSqliteSessionStore } from '@hunkyard/storage';
 import { createApi, problem } from './app';
 import { buildFrozenContext, withSessionRules } from './context';
 
@@ -211,7 +211,7 @@ export const startServer = async (cwd: string, port = 4317, options: RuntimeOpti
       );
       return c.body(bytes);
     } catch {
-      return c.text('Web build missing. Run pnpm build before reviewlab open.', 503);
+      return c.text('Web build missing. Run pnpm build before hunkyard open.', 503);
     }
   });
   const server = serve({ fetch: app.fetch, hostname: '127.0.0.1', port });

@@ -7,7 +7,7 @@ import {
   OpenAIChatSchema,
   type ReviewSession,
   redactSecrets,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 import { chatBody } from './requests';
 import { chatDeltas } from './stream';
 import {

@@ -5,7 +5,7 @@ const excluded = new Set([
   'node_modules',
   '.git',
   'dist',
-  '.reviewlab',
+  '.hunkyard',
   'test-results',
   'playwright-report',
 ]);

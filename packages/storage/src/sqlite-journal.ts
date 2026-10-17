@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseSync } from 'node:sqlite';
-import { type ReviewSession, SessionSchema } from '@reviewlab/domain';
+import { type ReviewSession, SessionSchema } from '@hunkyard/domain';
 import type { DurableEvent } from './durable-types';
 import { readRun } from './sqlite-runs';
 

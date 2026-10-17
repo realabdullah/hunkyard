@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
-import { type ChatDelta, chatDeltas, createModelGateway } from '@reviewlab/agents';
-import type { ModelTarget } from '@reviewlab/domain';
+import { type ChatDelta, chatDeltas, createModelGateway } from '@hunkyard/agents';
+import type { ModelTarget } from '@hunkyard/domain';
 import { describe, expect, test } from 'vitest';
 
 const target: ModelTarget = {

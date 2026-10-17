@@ -1,4 +1,4 @@
-import { isHostedProvider } from '@reviewlab/domain';
+import { isHostedProvider } from '@hunkyard/domain';
 import { type ReactNode, useState } from 'react';
 import { agentMeta, providerMeta, scopeMeta, shortSha } from '../../lib/meta';
 import { Icon, type IconName } from '../../ui/Icon';

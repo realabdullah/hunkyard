@@ -1,12 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import { constants } from 'node:fs';
 import { chmod, copyFile, link, lstat, mkdir, realpath, rm } from 'node:fs/promises';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { InteractionSchema } from '@reviewlab/domain';
+import { InteractionSchema } from '@hunkyard/domain';
 import { createSqliteSessionStore } from './sqlite';
 import { absent, getSession, withDatabase } from './sqlite-database';
 import { readRun } from './sqlite-runs';
+import { stateDirectory } from './state-directory';
 
 const verify = (db: DatabaseSync, root: string) => {
   if (db.prepare('PRAGMA user_version').get()?.user_version !== 9)
@@ -38,7 +39,7 @@ const safeFile = async (file: string) => {
 
 export const backupHistory = async (root: string, destination: string) => {
   const path = resolve(destination);
-  const temporary = join(await realpath(dirname(path)), `.reviewlab-backup-${randomUUID()}`);
+  const temporary = join(await realpath(dirname(path)), `.hunkyard-backup-${randomUUID()}`);
   try {
     await withDatabase(root, (db) => db.prepare('VACUUM INTO ?').run(temporary));
     const backup = new DatabaseSync(temporary);
@@ -59,14 +60,14 @@ export const backupHistory = async (root: string, destination: string) => {
 
 export const restoreHistory = async (root: string, source: string) => {
   await safeFile(source);
-  const parent = join(root, '.reviewlab');
+  const parent = await stateDirectory(root, 'sqlite');
   await mkdir(parent, { recursive: true, mode: 0o700 });
   if ((await lstat(parent)).isSymbolicLink()) throw new Error('Unsafe recovery directory.');
   const directory = join(parent, 'sqlite');
   try {
     await lstat(directory);
     throw new Error(
-      'Restore requires absent .reviewlab/sqlite. Stop ReviewLab and move existing history aside first.',
+      `Restore requires absent ${basename(parent)}/sqlite. Stop Hunkyard and move existing history aside first.`,
     );
   } catch (error) {
     if (!absent(error)) throw error;

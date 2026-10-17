@@ -1,14 +1,32 @@
 import { createHash } from 'node:crypto';
 import { lstat, readdir, readFile, realpath } from 'node:fs/promises';
 import { dirname, join, relative } from 'node:path';
-import { matchesPath, ProjectConfigSchema, type ReviewPolicyBundle } from '@reviewlab/domain';
+import {
+  matchesPath,
+  ProjectConfigSchema,
+  type ReviewPolicyBundle,
+  STATE_DIRECTORIES,
+  STATE_DIRECTORY,
+} from '@hunkyard/domain';
 import { globalRules, readJson } from './config';
 
 const hash = (text: string) => createHash('sha256').update(text).digest('hex');
 const absent = (error: unknown) =>
   error instanceof Error && 'code' in error && error.code === 'ENOENT';
+/** First existing `<state folder>/<name>`, preferring `.hunkyard` over a pre-rename `.reviewlab`. */
+const stateFile = async (root: string, name: string) => {
+  for (const directory of STATE_DIRECTORIES) {
+    try {
+      await lstat(join(root, directory, name));
+      return `${directory}/${name}`;
+    } catch (error) {
+      if (!absent(error)) throw error;
+    }
+  }
+  return `${STATE_DIRECTORY}/${name}`;
+};
 export const projectSettings = async (root: string) => {
-  const location = join(root, '.reviewlab/config.json');
+  const location = join(root, await stateFile(root, 'config.json'));
   try {
     if (
       (await lstat(location)).isSymbolicLink() ||
@@ -113,7 +131,7 @@ export const resolvePolicy = async (
       'copilot',
       'cursor',
       'pr-agent',
-      'reviewlab',
+      'hunkyard',
     ],
   );
   const candidates: { path: string; format: string; patterns: string[] }[] = [];
@@ -146,8 +164,12 @@ export const resolvePolicy = async (
       format: 'copilot',
       patterns: ['**'],
     });
-  if (enabled.has('reviewlab'))
-    candidates.push({ path: '.reviewlab/review.md', format: 'reviewlab', patterns: ['**'] });
+  if (enabled.has('hunkyard') || enabled.has('reviewlab'))
+    candidates.push({
+      path: await stateFile(root, 'review.md'),
+      format: 'hunkyard',
+      patterns: ['**'],
+    });
   if (enabled.has('pr-agent'))
     candidates.push({ path: '.pr_agent.toml', format: 'pr-agent', patterns: ['**'] });
   if (enabled.has('cursor'))
@@ -167,7 +189,7 @@ export const resolvePolicy = async (
       if (parsed.diagnostic) diagnostics.push(`${candidate.path}: ${parsed.diagnostic}`);
     }
     if (candidate.format === 'pr-agent') {
-      // Deliberately narrow TOML adapter; arbitrary Qodo settings are not ReviewLab permissions.
+      // Deliberately narrow TOML adapter; arbitrary Qodo settings are not Hunkyard permissions.
       const section = content.match(/\[pr_reviewer\]([\s\S]*?)(?=\n\[|$)/)?.[1] ?? '';
       text =
         section.match(/extra_instructions\s*=\s*"""([\s\S]*?)"""/)?.[1] ??

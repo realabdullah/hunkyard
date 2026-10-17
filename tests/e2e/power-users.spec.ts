@@ -4,13 +4,13 @@ import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
+import { createGitFixture } from '@hunkyard/testing';
 import { expect, test } from '@playwright/test';
-import { createGitFixture } from '@reviewlab/testing';
 
 const execute = promisify(execFile);
 test('CLI policy, workflow, semantic opt-in, consent fingerprint and analytics work without touching developer edits', async () => {
   const fixture = await createGitFixture();
-  const directory = await mkdtemp(join(tmpdir(), 'reviewlab-power-cli-'));
+  const directory = await mkdtemp(join(tmpdir(), 'hunkyard-power-cli-'));
   let embeddings = 0;
   let inference = 0;
   const model = createServer(async (request, response) => {
@@ -41,7 +41,7 @@ test('CLI policy, workflow, semantic opt-in, consent fingerprint and analytics w
       process.execPath,
       ['--import', 'tsx', 'apps/cli/src/index.ts', ...args, '--repo', fixture.root, '--json'],
       {
-        env: { ...process.env, REVIEWLAB_USER_CONFIG: join(directory, 'config.json') },
+        env: { ...process.env, HUNKYARD_USER_CONFIG: join(directory, 'config.json') },
         timeout: 20000,
       },
     );
@@ -142,10 +142,10 @@ test('hosted settings name the destination and clear consent when provider or en
   page,
 }) => {
   const fixture = await createGitFixture();
-  const directory = await mkdtemp(join(tmpdir(), 'reviewlab-hosted-ui-'));
-  const previous = process.env.REVIEWLAB_USER_CONFIG;
-  process.env.REVIEWLAB_USER_CONFIG = join(directory, 'config.json');
-  const { startServer } = await import('@reviewlab/server/runtime');
+  const directory = await mkdtemp(join(tmpdir(), 'hunkyard-hosted-ui-'));
+  const previous = process.env.HUNKYARD_USER_CONFIG;
+  process.env.HUNKYARD_USER_CONFIG = join(directory, 'config.json');
+  const { startServer } = await import('@hunkyard/server/runtime');
   const server = await startServer(fixture.root, 4319);
   try {
     await page.goto(`${server.origin}/#token=${server.token}`);
@@ -182,8 +182,8 @@ test('hosted settings name the destination and clear consent when provider or en
     expect(await server.service.list()).toEqual([]);
   } finally {
     await server.close();
-    if (previous === undefined) delete process.env.REVIEWLAB_USER_CONFIG;
-    else process.env.REVIEWLAB_USER_CONFIG = previous;
+    if (previous === undefined) delete process.env.HUNKYARD_USER_CONFIG;
+    else process.env.HUNKYARD_USER_CONFIG = previous;
     await fixture.dispose();
     await rm(directory, { recursive: true, force: true });
   }

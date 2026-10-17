@@ -6,21 +6,21 @@ import {
   createModelGateway,
   probeModel,
   probeModelCapabilities,
-} from '@reviewlab/agents';
+} from '@hunkyard/agents';
 import {
   configPath,
   loadAuthorizedProviderSecret,
   loadTarget,
   saveProviderSecret,
   updateConfig,
-} from '@reviewlab/context';
-import { createReviewPlan } from '@reviewlab/core';
+} from '@hunkyard/context';
+import { createReviewPlan } from '@hunkyard/core';
 import {
   assertCurrentAuthorization,
   ModelTargetSchema,
   ProviderSchema,
   SecretRequestSchema,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 beforeEach(() => {
@@ -106,7 +106,7 @@ test('hosted adapters map exact paths, isolate keys, validate output, and use De
         async (_url, body) =>
           body === undefined
             ? { data: [{ id: target.model }] }
-            : { choices: [{ message: { content: '{"reviewlab_probe":"ok"}' } }] },
+            : { choices: [{ message: { content: '{"hunkyard_probe":"ok"}' } }] },
         secret,
       );
       expect(capability.structuredOutput).toBe('verified');
@@ -164,11 +164,11 @@ test('hosted providers refuse local-only, unapproved origins, operations, and cr
 });
 
 test('legacy OpenAI consent never authorizes a new destination, grants are repository/origin specific and revocation blocks repairs', async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'reviewlab-hosted-'));
-  const previous = process.env.REVIEWLAB_USER_CONFIG;
-  process.env.REVIEWLAB_USER_CONFIG = join(directory, 'config.json');
-  const root = await mkdtemp(join(tmpdir(), 'reviewlab-hosted-repo-'));
-  const other = await mkdtemp(join(tmpdir(), 'reviewlab-other-repo-'));
+  const directory = await mkdtemp(join(tmpdir(), 'hunkyard-hosted-'));
+  const previous = process.env.HUNKYARD_USER_CONFIG;
+  process.env.HUNKYARD_USER_CONFIG = join(directory, 'config.json');
+  const root = await mkdtemp(join(tmpdir(), 'hunkyard-hosted-repo-'));
+  const other = await mkdtemp(join(tmpdir(), 'hunkyard-other-repo-'));
   try {
     expect((await updateConfig(root, { allowCloud: true })).approvedHostedOrigins).toEqual([]);
     await updateConfig(root, {
@@ -235,8 +235,8 @@ test('legacy OpenAI consent never authorizes a new destination, grants are repos
     });
     expect((await loadTarget(root)).cloudConsent).toBe(false);
   } finally {
-    if (previous === undefined) delete process.env.REVIEWLAB_USER_CONFIG;
-    else process.env.REVIEWLAB_USER_CONFIG = previous;
+    if (previous === undefined) delete process.env.HUNKYARD_USER_CONFIG;
+    else process.env.HUNKYARD_USER_CONFIG = previous;
     await Promise.all(
       [directory, root, other].map((path) => rm(path, { recursive: true, force: true })),
     );

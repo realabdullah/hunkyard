@@ -7,7 +7,7 @@ import { promisify } from 'node:util';
 const execute = promisify(execFile);
 
 export const createGitFixture = async (options: { unborn?: boolean } = {}) => {
-  const root = await mkdtemp(join(tmpdir(), 'reviewlab-test-'));
+  const root = await mkdtemp(join(tmpdir(), 'hunkyard-test-'));
   const git = async (...args: string[]): Promise<string> => {
     const { stdout } = await execute('git', args, {
       cwd: root,
@@ -18,9 +18,9 @@ export const createGitFixture = async (options: { unborn?: boolean } = {}) => {
         ),
         GIT_CONFIG_NOSYSTEM: '1',
         GIT_CONFIG_GLOBAL: '/dev/null',
-        GIT_AUTHOR_NAME: 'ReviewLab Fixture',
+        GIT_AUTHOR_NAME: 'Hunkyard Fixture',
         GIT_AUTHOR_EMAIL: 'fixture@example.test',
-        GIT_COMMITTER_NAME: 'ReviewLab Fixture',
+        GIT_COMMITTER_NAME: 'Hunkyard Fixture',
         GIT_COMMITTER_EMAIL: 'fixture@example.test',
         GIT_TERMINAL_PROMPT: '0',
       },

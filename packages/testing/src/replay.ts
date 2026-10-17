@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
-import type { ReviewAgent } from '@reviewlab/core/ports';
-import { ReviewOutputSchema, type ReviewSnapshot } from '@reviewlab/domain';
+import type { ReviewAgent } from '@hunkyard/core/ports';
+import { ReviewOutputSchema, type ReviewSnapshot } from '@hunkyard/domain';
 
 export type ReviewTraceStep = {
   diff: string;

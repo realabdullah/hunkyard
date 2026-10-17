@@ -1,6 +1,6 @@
 import { request as httpRequest, type IncomingMessage } from 'node:http';
 import { request as httpsRequest } from 'node:https';
-import { isHostedProvider, type ModelTarget, validateTarget } from '@reviewlab/domain';
+import { isHostedProvider, type ModelTarget, validateTarget } from '@hunkyard/domain';
 
 export type ModelTransport = (
   url: URL,
@@ -15,7 +15,7 @@ export type ModelStreamTransport = (
   signal: AbortSignal,
   key?: string,
 ) => AsyncIterable<string>;
-export { validateTarget } from '@reviewlab/domain';
+export { validateTarget } from '@hunkyard/domain';
 
 /** Opens one request to the validated destination; redirects and non-2xx answers are refused. */
 const open = (

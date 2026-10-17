@@ -1,11 +1,11 @@
 import { createHash } from 'node:crypto';
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { createReviewService } from '@reviewlab/core';
-import type { ModelTarget, PullRequestRequest } from '@reviewlab/domain';
-import { capturePullRequest, captureStaged, runBytes } from '@reviewlab/git';
-import { createGitHubProvider, type GitHubTransport } from '@reviewlab/providers';
-import { createSqliteSessionStore } from '@reviewlab/storage';
+import { createReviewService } from '@hunkyard/core';
+import type { ModelTarget, PullRequestRequest } from '@hunkyard/domain';
+import { capturePullRequest, captureStaged, runBytes } from '@hunkyard/git';
+import { createGitHubProvider, type GitHubTransport } from '@hunkyard/providers';
+import { createSqliteSessionStore } from '@hunkyard/storage';
 import { createGitFixture } from './git-fixture';
 
 export const request: PullRequestRequest = {

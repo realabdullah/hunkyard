@@ -7,14 +7,14 @@ import {
   type ReviewPolicyBundle,
   type ReviewSession,
   type ReviewSnapshot,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 import { createReviewExecutor } from './execution';
 import { createInteractionService } from './interaction';
 import { createReviewPlan } from './orchestration';
 import { captureGitHub, createPullRequestService } from './pull-request';
 import { createReviewQueue } from './queue';
 
-export { findingKey } from '@reviewlab/domain';
+export { findingKey } from '@hunkyard/domain';
 export { createReviewPlan } from './orchestration';
 
 import type { ReviewServiceDependencies } from './ports';
@@ -26,7 +26,7 @@ export const createReviewService = (deps: ReviewServiceDependencies) => {
   const executionQueue = createReviewQueue();
   let queue: Promise<unknown> = Promise.resolve();
   const writable = () => {
-    if (stopping) throw new Error('ReviewLab is shutting down.');
+    if (stopping) throw new Error('Hunkyard is shutting down.');
     if (deps.writable === false) throw new Error('This workspace connection is read-only.');
   };
   const serial = <T>(operation: () => Promise<T>): Promise<T> => {

@@ -1,4 +1,4 @@
-import { findingKey } from '@reviewlab/domain';
+import { findingKey } from '@hunkyard/domain';
 import { lazy, Suspense, useState } from 'react';
 import { api } from '../../api';
 import { diffStats } from '../../diff-lines';
@@ -30,7 +30,7 @@ const CodeEditor = lazy(() =>
 
 export const SidePanel = () => {
   const { selection, select, session } = useReview();
-  const [wide, setWide] = useStoredState('reviewlab.panelWide', false);
+  const [wide, setWide] = useStoredState('hunkyard.panelWide', false);
   if (!selection) return null;
   const finding =
     selection.kind === 'finding'
@@ -272,8 +272,8 @@ const ChatPanel = () => {
         </summary>
         <section className="rules">
           <p className="muted small">
-            Dismiss two findings as “preference” and ReviewLab can suggest a session rule so the
-            crew stops flagging it. Repository rules are never changed.
+            Dismiss two findings as “preference” and Hunkyard can suggest a session rule so the crew
+            stops flagging it. Repository rules are never changed.
           </p>
           <Button
             size="sm"

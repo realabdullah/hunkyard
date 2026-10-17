@@ -1,9 +1,10 @@
 import { chmod, lstat, mkdir, open } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
-import { type ReviewSession, SessionSchema } from '@reviewlab/domain';
+import { type ReviewSession, SessionSchema } from '@hunkyard/domain';
 import { validateSessionIntegrity, validateSnapshot } from './file-store';
 import { journal, runKey } from './sqlite-journal';
+import { stateDirectory } from './state-directory';
 
 const schemaVersion = 9;
 const schema = `
@@ -35,7 +36,7 @@ const durableSchema = `
 export const absent = (error: unknown) =>
   error instanceof Error && 'code' in error && error.code === 'ENOENT';
 const prepare = async (root: string) => {
-  const parent = join(root, '.reviewlab');
+  const parent = await stateDirectory(root, 'sqlite');
   const dir = join(parent, 'sqlite');
   for (const path of [parent, dir]) {
     await mkdir(path, { recursive: true, mode: 0o700 });
@@ -85,7 +86,7 @@ export const withDatabase = async <T>(
     db.exec('PRAGMA busy_timeout = 100; PRAGMA foreign_keys = ON; PRAGMA synchronous = FULL;');
     const version = db.prepare('PRAGMA user_version').get()?.user_version;
     if (typeof version !== 'number' || version > schemaVersion)
-      throw new Error('Unsupported SQLite schema version; use a compatible ReviewLab version.');
+      throw new Error('Unsupported SQLite schema version; use a compatible Hunkyard version.');
     db.exec('PRAGMA journal_mode = WAL');
     if (version === 0) {
       transaction(db, () => {

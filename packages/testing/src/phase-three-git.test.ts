@@ -1,8 +1,8 @@
 import { chmod, mkdir, readFile, rename, symlink, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { CaptureRequestSchema, changedLines } from '@reviewlab/domain';
-import { captureSnapshot } from '@reviewlab/git';
-import { validateSnapshot } from '@reviewlab/storage';
+import { CaptureRequestSchema, changedLines } from '@hunkyard/domain';
+import { captureSnapshot } from '@hunkyard/git';
+import { validateSnapshot } from '@hunkyard/storage';
 import { expect, test } from 'vitest';
 import { createGitFixture } from './git-fixture';
 
@@ -58,8 +58,8 @@ fixtureTest(
     await git('commit', '-m', 'test: ignore');
     await mkdir(join(root, 'ignored'));
     await writeFile(join(root, 'ignored/key.txt'), 'ignored');
-    await mkdir(join(root, '.reviewlab'));
-    await writeFile(join(root, '.reviewlab/history.db'), 'internal');
+    await mkdir(join(root, '.hunkyard'));
+    await writeFile(join(root, '.hunkyard/history.db'), 'internal');
     await writeFile(join(root, 'new ü.ts'), 'new code\n');
     await writeFile(join(root, 'example.ts'), 'working edit\n');
     expect((await captureSnapshot(root, { kind: 'working-tree' })).files).toEqual(['example.ts']);
@@ -184,7 +184,7 @@ fixtureTest(
   'merge conflicts and sparse working scope fail with actionable diagnostics; staged sparse remains usable',
   async ({ root, git }) => {
     const blob = (await git('rev-parse', 'HEAD:example.ts')).trim();
-    const { runBytes } = await import('@reviewlab/git');
+    const { runBytes } = await import('@hunkyard/git');
     await runBytes(root, ['update-index', '--index-info'], {
       input: Buffer.from(
         `0 ${'0'.repeat(40)}\texample.ts\n100644 ${blob} 1\texample.ts\n100644 ${blob} 2\texample.ts\n100644 ${blob} 3\texample.ts\n`,
@@ -244,7 +244,7 @@ fixtureTest(
     const before = await git('ls-files', '--stage', '-z');
     const { mkdtemp, rm } = await import('node:fs/promises');
     const { tmpdir } = await import('node:os');
-    const outside = await mkdtemp(join(tmpdir(), 'reviewlab-escape-'));
+    const outside = await mkdtemp(join(tmpdir(), 'hunkyard-escape-'));
     try {
       await writeFile(join(outside, 'private.ts'), 'private outside bytes');
       await rm(join(root, 'src'), { recursive: true });
@@ -264,7 +264,7 @@ fixtureTest(
     await writeFile(join(root, '.gitattributes'), '*.ts filter=forbidden\n');
     await git('add', '.gitattributes');
     await git('commit', '-m', 'test: filter attributes');
-    await git('config', 'filter.forbidden.clean', 'reviewlab-forbidden-command');
+    await git('config', 'filter.forbidden.clean', 'hunkyard-forbidden-command');
     await git('config', 'filter.forbidden.required', 'true');
     await git('config', 'core.autocrlf', 'true');
     await writeFile(join(root, 'example.ts'), 'raw working bytes\r\n');

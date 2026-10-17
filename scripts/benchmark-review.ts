@@ -1,6 +1,6 @@
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { loadAuthorizedProviderSecret, loadReviewOptions, loadTarget } from '@reviewlab/context';
+import { loadAuthorizedProviderSecret, loadReviewOptions, loadTarget } from '@hunkyard/context';
 import {
   benchmarkMarkdown,
   runQualityBenchmark,

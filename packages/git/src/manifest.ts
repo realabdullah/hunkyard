@@ -1,4 +1,4 @@
-import { type SnapshotFileChange, SnapshotFileChangeSchema } from '@reviewlab/domain';
+import { type SnapshotFileChange, SnapshotFileChangeSchema } from '@hunkyard/domain';
 
 const isChangeStatus = (value: string | undefined): value is SnapshotFileChange['status'] =>
   value === 'A' || value === 'D' || value === 'M' || value === 'R' || value === 'T';

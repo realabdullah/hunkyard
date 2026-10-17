@@ -253,7 +253,7 @@ export const ProjectConfigSchema = z
     rules: z.array(z.string().max(4000)).max(100).default([]),
     exclude: z.array(safePath).max(100).default([]),
     instructionSources: z
-      .array(z.enum(['agents', 'claude', 'copilot', 'cursor', 'pr-agent', 'reviewlab']))
+      .array(z.enum(['agents', 'claude', 'copilot', 'cursor', 'pr-agent', 'hunkyard', 'reviewlab']))
       .optional(),
     instructionOrder: z.array(safePath).max(100).default([]),
     contextBytes: z.number().int().min(1024).max(100000).default(24000),
@@ -514,6 +514,7 @@ export {
 export { type PluginManifest, PluginManifestSchema, type PluginPermission } from './plugin';
 export * from './pull-request';
 export { redactSecrets } from './redaction';
+export * from './state';
 
 export const ShareablePolicySchema = shareablePolicySchema(ReviewOptionsSchema, safePath);
 export type ShareablePolicy = z.infer<typeof ShareablePolicySchema>;

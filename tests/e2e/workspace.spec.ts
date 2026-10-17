@@ -2,8 +2,8 @@ import { execFile } from 'node:child_process';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
+import { createGitFixture } from '@hunkyard/testing';
 import { expect, test } from '@playwright/test';
-import { createGitFixture } from '@reviewlab/testing';
 import { fixtureStatePath } from './runtime-path';
 
 const execute = promisify(execFile);
@@ -104,7 +104,7 @@ test('CLI doctor, staged review, sessions and help run against the same disposab
     execute(
       process.execPath,
       ['--import', 'tsx', 'apps/cli/src/index.ts', ...args, '--repo', fixture.root],
-      { env: { ...process.env, REVIEWLAB_USER_CONFIG: fixture.configFile }, timeout: 15_000 },
+      { env: { ...process.env, HUNKYARD_USER_CONFIG: fixture.configFile }, timeout: 15_000 },
     );
   try {
     await run('config', '--model', 'fixture');
@@ -121,7 +121,7 @@ test('CLI doctor, staged review, sessions and help run against the same disposab
   }
 });
 
-test('reviewlab open starts the secured production workspace and shuts down cleanly', async ({
+test('hunkyard open starts the secured production workspace and shuts down cleanly', async ({
   page,
   request,
 }) => {
@@ -145,7 +145,7 @@ test('reviewlab open starts the secured production workspace and shuts down clea
       '--repo',
       fixture.root,
     ],
-    { env: { ...process.env, REVIEWLAB_USER_CONFIG: fixture.configFile } },
+    { env: { ...process.env, HUNKYARD_USER_CONFIG: fixture.configFile } },
   );
   const { spawn } = await import('node:child_process');
   const child = spawn(
@@ -162,7 +162,7 @@ test('reviewlab open starts the secured production workspace and shuts down clea
       '4318',
     ],
     {
-      env: { ...process.env, REVIEWLAB_USER_CONFIG: fixture.configFile },
+      env: { ...process.env, HUNKYARD_USER_CONFIG: fixture.configFile },
       stdio: ['ignore', 'pipe', 'pipe'],
     },
   );
@@ -177,7 +177,7 @@ test('reviewlab open starts the secured production workspace and shuts down clea
     if (!token) throw new Error('CLI failed to deliver its API credential');
     expect((await request.get('http://127.0.0.1:4318/api/v1/sessions')).status()).toBe(401);
     await page.goto(`http://127.0.0.1:4318/#token=${token}`);
-    await expect(page.getByRole('heading', { name: 'ReviewLab' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Hunkyard' })).toBeVisible();
     await expect(page.locator('body')).toHaveCSS('margin', '0px');
     await expect(page.getByRole('heading', { name: 'Division by zero' })).toBeVisible();
     await page.getByRole('button', { name: 'example.ts:1 (new)', exact: true }).click();
@@ -256,14 +256,14 @@ test('Phase 3 browser and CLI scopes expose frozen working content, untracked in
   const { mkdir, rm } = await import('node:fs/promises');
   const untracked = join(fixture.root, 'scope-untracked.ts');
   await writeFile(untracked, 'export const added = 1;\n');
-  await mkdir(join(fixture.root, '.reviewlab'), { recursive: true });
+  await mkdir(join(fixture.root, '.hunkyard'), { recursive: true });
   await writeFile(
-    join(fixture.root, '.reviewlab/config.json'),
+    join(fixture.root, '.hunkyard/config.json'),
     JSON.stringify({ exclude: ['scope-untracked.ts'] }),
   );
   const headers = {
     authorization: `Bearer ${fixture.token}`,
-    'x-reviewlab-csrf': '1',
+    'x-hunkyard-csrf': '1',
     origin: 'http://127.0.0.1:5173',
   };
   try {
@@ -315,7 +315,7 @@ test('Phase 3 browser and CLI scopes expose frozen working content, untracked in
           '--repo',
           isolated.root,
         ],
-        { env: { ...process.env, REVIEWLAB_USER_CONFIG: fixture.configFile }, timeout: 15000 },
+        { env: { ...process.env, HUNKYARD_USER_CONFIG: fixture.configFile }, timeout: 15000 },
       );
       const run = JSON.parse(result.stdout) as {
         status: string;
@@ -330,7 +330,7 @@ test('Phase 3 browser and CLI scopes expose frozen working content, untracked in
     }
   } finally {
     await rm(untracked, { force: true });
-    await rm(join(fixture.root, '.reviewlab/config.json'), { force: true });
+    await rm(join(fixture.root, '.hunkyard/config.json'), { force: true });
   }
 });
 
@@ -352,7 +352,7 @@ test('specialist profile exposes routes, saves deduplicated attribution and veri
   const headers = {
     authorization: `Bearer ${fixture.token}`,
     origin: 'http://127.0.0.1:4317',
-    'x-reviewlab-csrf': '1',
+    'x-hunkyard-csrf': '1',
   };
   await request.post('http://127.0.0.1:4317/api/v1/config', {
     headers,
@@ -419,7 +419,7 @@ test('specialist profile exposes routes, saves deduplicated attribution and veri
       ],
       {
         cwd: process.cwd(),
-        env: { ...process.env, REVIEWLAB_USER_CONFIG: fixture.configFile },
+        env: { ...process.env, HUNKYARD_USER_CONFIG: fixture.configFile },
         timeout: 30000,
       },
     );
@@ -452,7 +452,7 @@ test('specialist profile exposes routes, saves deduplicated attribution and veri
       ],
       {
         cwd: process.cwd(),
-        env: { ...process.env, REVIEWLAB_USER_CONFIG: fixture.configFile },
+        env: { ...process.env, HUNKYARD_USER_CONFIG: fixture.configFile },
         timeout: 30000,
       },
     );
@@ -556,7 +556,7 @@ test('GitHub PR browser capture, explicit comment confirmation, reopen and force
   const headers = {
     authorization: `Bearer ${fixture.token}`,
     origin: 'http://127.0.0.1:4317',
-    'x-reviewlab-csrf': '1',
+    'x-hunkyard-csrf': '1',
   };
   const health = await request.get('http://127.0.0.1:4317/api/v1/health', { headers });
   const { target } = await health.json();

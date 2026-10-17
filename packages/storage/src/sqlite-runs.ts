@@ -1,5 +1,5 @@
 import type { DatabaseSync, SQLOutputValue } from 'node:sqlite';
-import { type ReviewSession, SessionSchema } from '@reviewlab/domain';
+import { type ReviewSession, SessionSchema } from '@hunkyard/domain';
 import { validateSessionIntegrity } from './file-store';
 
 export const readRun = (db: DatabaseSync, row: Record<string, SQLOutputValue>): ReviewSession => {

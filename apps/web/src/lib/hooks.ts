@@ -3,7 +3,7 @@ import {
   DomainEventSchema,
   type Interaction,
   type ReviewSession,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, eventStream, sseFrames } from '../api';
 import { isLive, runIdOf } from './meta';
@@ -144,10 +144,14 @@ export const useHotkeys = (
   }, [enabled]);
 };
 
+/** Reads a `hunkyard.*` key, falling back to the value saved under its pre-rename `reviewlab.*` key. */
+export const readStored = (key: string) =>
+  localStorage.getItem(key) ?? localStorage.getItem(key.replace(/^hunkyard\./, 'reviewlab.'));
+
 export const useStoredState = <T>(key: string, initial: T) => {
   const [value, setValue] = useState<T>(() => {
     try {
-      const raw = localStorage.getItem(key);
+      const raw = readStored(key);
       return raw ? (JSON.parse(raw) as T) : initial;
     } catch {
       return initial;

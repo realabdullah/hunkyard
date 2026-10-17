@@ -4,7 +4,7 @@ import {
   diffSections,
   excludedPath,
   type ReviewSnapshot,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 import { type GitRunner, runBytes } from './commands';
 import { parseChanges } from './manifest';
 

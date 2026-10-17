@@ -5,10 +5,10 @@ import { containsSecret } from './secrets';
 test('boundary parser covers re-exports, dynamic and type imports', () => {
   expect(
     importedModules(
-      `export { x } from '@reviewlab/git'; const x = import('node:fs'); type T = import('@reviewlab/storage').T;`,
+      `export { x } from '@hunkyard/git'; const x = import('node:fs'); type T = import('@hunkyard/storage').T;`,
       'fixture.ts',
     ),
-  ).toEqual(['@reviewlab/git', 'node:fs', '@reviewlab/storage']);
+  ).toEqual(['@hunkyard/git', 'node:fs', '@hunkyard/storage']);
   expect(() => importedModules('import(target)', 'fixture.ts')).toThrow('nonliteral');
   expect(() =>
     assertAcyclic(

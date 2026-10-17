@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 
 const file = process.argv[2];
-const message = file ? await readFile(file, 'utf8') : process.env.REVIEWLAB_COMMIT_MESSAGE;
+const message = file ? await readFile(file, 'utf8') : process.env.HUNKYARD_COMMIT_MESSAGE;
 if (!message) throw new Error('Usage: pnpm check:commit <commit-message-file>');
 const subject = message.split('\n')[0] ?? '';
 if (

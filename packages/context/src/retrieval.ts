@@ -5,12 +5,13 @@ import {
   changedLines,
   diffSections,
   excludedPath,
+  isStatePath,
   type ModelTarget,
   type ReviewPolicyBundle,
   type ReviewSnapshot,
   redactSecrets,
   reviewRulePaths,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 
 import { type SemanticRetriever, semanticRank } from './semantic';
 
@@ -91,7 +92,7 @@ export const collectContext = async (
       !excludedAliases.has(entry.path) &&
       entry.mode !== '120000' &&
       entry.mode !== '160000' &&
-      !entry.path.startsWith('.reviewlab/') &&
+      !isStatePath(entry.path) &&
       !/(^|\/)(node_modules|vendor|dist|build)\//.test(entry.path),
   );
   const byPath = new Map(available.map((entry) => [entry.path, entry]));

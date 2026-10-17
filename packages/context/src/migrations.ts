@@ -1,4 +1,4 @@
-import { UserConfigSchema } from '@reviewlab/domain';
+import { UserConfigSchema } from '@hunkyard/domain';
 
 /** Version 0 is the original unversioned config; v1 adds explicit consent metadata. */
 export const migrateUserConfig = (input: unknown) => {
@@ -6,7 +6,7 @@ export const migrateUserConfig = (input: unknown) => {
     throw new Error('User configuration must be an object.');
   const version = 'version' in input ? input.version : 0;
   if (version !== 0 && version !== 1)
-    throw new Error('Unsupported user configuration version; use a compatible ReviewLab release.');
+    throw new Error('Unsupported user configuration version; use a compatible Hunkyard release.');
   const config = UserConfigSchema.parse({ ...input, version: 1 });
   // Never infer related-source consent when upgrading an older diff-only configuration.
   config.contextCloudConsent ??= {};

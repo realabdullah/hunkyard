@@ -1,4 +1,4 @@
-import { PluginManifestSchema, type PluginPermission, validateFindings } from '@reviewlab/domain';
+import { PluginManifestSchema, type PluginPermission, validateFindings } from '@hunkyard/domain';
 import type { ReviewAgent } from './index';
 
 /** Declarative plugins run inside the existing gateway, never as executable modules. */

@@ -12,10 +12,10 @@ import type {
   ReviewPolicyBundle,
   ReviewSession,
   ReviewSnapshot,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 export type ReviewAgent = {
   review(input: {
-    plugin?: import('@reviewlab/domain').PluginManifest;
+    plugin?: import('@hunkyard/domain').PluginManifest;
     agentId?: AgentId;
     candidates?: FindingDraft[];
     reserve?: (input: number, output: number) => void;

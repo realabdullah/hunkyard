@@ -1,22 +1,22 @@
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createCorrectnessReviewer } from '@reviewlab/agents';
-import { loadTarget, resolvePolicy } from '@reviewlab/context';
-import { createReviewPlan, createReviewService } from '@reviewlab/core';
-import type { ReviewAgent } from '@reviewlab/core/ports';
-import { ReviewOptionsSchema } from '@reviewlab/domain';
-import { captureStaged } from '@reviewlab/git';
-import { createSqliteSessionStore } from '@reviewlab/storage';
+import { createCorrectnessReviewer } from '@hunkyard/agents';
+import { loadTarget, resolvePolicy } from '@hunkyard/context';
+import { createReviewPlan, createReviewService } from '@hunkyard/core';
+import type { ReviewAgent } from '@hunkyard/core/ports';
+import { ReviewOptionsSchema } from '@hunkyard/domain';
+import { captureStaged } from '@hunkyard/git';
+import { createSqliteSessionStore } from '@hunkyard/storage';
 import { expect, test } from 'vitest';
 import { createGitFixture } from './git-fixture';
 import { benchmarkCases, benchmarkFinding, scriptedReviewer } from './phase-four-fixtures';
 
 const setup = async () => {
   const fixture = await createGitFixture();
-  const dir = await mkdtemp(join(tmpdir(), 'reviewlab-phase4-config-'));
-  const previous = process.env.REVIEWLAB_USER_CONFIG;
-  process.env.REVIEWLAB_USER_CONFIG = join(dir, 'config.json');
+  const dir = await mkdtemp(join(tmpdir(), 'hunkyard-phase4-config-'));
+  const previous = process.env.HUNKYARD_USER_CONFIG;
+  process.env.HUNKYARD_USER_CONFIG = join(dir, 'config.json');
   for (const item of benchmarkCases) {
     await writeFile(join(fixture.root, item.file), `${item.bug}\n`);
     await writeFile(join(fixture.root, `safe-${item.file}`), `${item.safe}\n`);
@@ -44,8 +44,8 @@ const setup = async () => {
     store,
     service,
     dispose: async () => {
-      if (previous === undefined) delete process.env.REVIEWLAB_USER_CONFIG;
-      else process.env.REVIEWLAB_USER_CONFIG = previous;
+      if (previous === undefined) delete process.env.HUNKYARD_USER_CONFIG;
+      else process.env.HUNKYARD_USER_CONFIG = previous;
       await fixture.dispose();
       await rm(dir, { recursive: true, force: true });
     },

@@ -1,4 +1,4 @@
-import type { ReviewOptions, ReviewPlan } from '@reviewlab/domain';
+import type { ReviewOptions, ReviewPlan } from '@hunkyard/domain';
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 

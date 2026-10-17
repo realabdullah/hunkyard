@@ -2,15 +2,15 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { updateConfig } from '@reviewlab/context';
-import { startServer } from '@reviewlab/server/runtime';
-import { createGitFixture } from '@reviewlab/testing';
+import { updateConfig } from '@hunkyard/context';
+import { startServer } from '@hunkyard/server/runtime';
+import { createGitFixture } from '@hunkyard/testing';
 import { createGitHubFixture } from './github';
 import { fixtureStatePath } from './runtime-path';
 
 const fixture = await createGitFixture();
-const configDir = await mkdtemp(join(tmpdir(), 'reviewlab-e2e-config-'));
-process.env.REVIEWLAB_USER_CONFIG = join(configDir, 'config.json');
+const configDir = await mkdtemp(join(tmpdir(), 'hunkyard-e2e-config-'));
+process.env.HUNKYARD_USER_CONFIG = join(configDir, 'config.json');
 await writeFile(
   join(fixture.root, 'example.ts'),
   'export const divide = (value: number) => value / 0;\n',
@@ -96,7 +96,7 @@ await writeFile(
     githubRoot: github.root,
     githubFirst: github.first,
     githubSecond: github.second,
-    configFile: process.env.REVIEWLAB_USER_CONFIG,
+    configFile: process.env.HUNKYARD_USER_CONFIG,
   }),
   { mode: 0o600 },
 );

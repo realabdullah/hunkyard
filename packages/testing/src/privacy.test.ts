@@ -4,8 +4,8 @@ import {
   createModelGateway,
   probeModel,
   redactSecrets,
-} from '@reviewlab/agents';
-import type { ModelTarget } from '@reviewlab/domain';
+} from '@hunkyard/agents';
+import type { ModelTarget } from '@hunkyard/domain';
 import { describe, expect, test } from 'vitest';
 import { fixtureSnapshot } from './replay';
 

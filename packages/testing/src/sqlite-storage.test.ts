@@ -1,17 +1,18 @@
 import { execFile } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
-import { lstat, readdir, readFile, symlink, writeFile } from 'node:fs/promises';
+import { lstat, readdir, readFile, rename, symlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { promisify } from 'node:util';
-import { createReviewService } from '@reviewlab/core';
-import { ModelTargetSchema, type ReviewSession } from '@reviewlab/domain';
-import { captureStaged } from '@reviewlab/git';
+import { createReviewService } from '@hunkyard/core';
+import { ModelTargetSchema, type ReviewSession } from '@hunkyard/domain';
+import { captureStaged } from '@hunkyard/git';
 import {
   createFileSessionStore,
   createSqliteSessionStore,
+  historyDatabasePath,
   migrateFileHistory,
-} from '@reviewlab/storage';
+} from '@hunkyard/storage';
 import { expect, test } from 'vitest';
 import { createGitFixture } from './git-fixture';
 
@@ -37,7 +38,7 @@ const setup = async () => {
     ...fixture,
     root: snapshot.repoRoot,
     session,
-    path: join(fixture.root, '.reviewlab', 'sqlite', 'history.db'),
+    path: join(fixture.root, '.hunkyard', 'sqlite', 'history.db'),
   };
 };
 
@@ -108,9 +109,9 @@ test('explicit JSON migration is atomic, repeatable, private and preserves sourc
     const { root, session } = fixture;
     const file = createFileSessionStore(root);
     await file.save(session);
-    const original = await readFile(join(root, '.reviewlab', 'sessions-v2', `${session.id}.json`));
+    const original = await readFile(join(root, '.hunkyard', 'sessions-v2', `${session.id}.json`));
     const frozen = await readFile(
-      join(root, '.reviewlab', 'snapshots-v2', `${session.snapshot.id}.json`),
+      join(root, '.hunkyard', 'snapshots-v2', `${session.snapshot.id}.json`),
     );
     const cli = await promisify(execFile)(process.execPath, [
       '--import',
@@ -131,14 +132,14 @@ test('explicit JSON migration is atomic, repeatable, private and preserves sourc
     await expect(migrateFileHistory(root)).rejects.toThrow('conflicts');
     expect(await createSqliteSessionStore(root).list()).toEqual([session]);
     expect(
-      await readFile(join(root, '.reviewlab', 'snapshots-v2', `${session.snapshot.id}.json`)),
+      await readFile(join(root, '.hunkyard', 'snapshots-v2', `${session.snapshot.id}.json`)),
     ).toEqual(frozen);
     // Restore exactly the original bytes, then verify malformed history causes no partial import.
-    await writeFile(join(root, '.reviewlab', 'sessions-v2', `${session.id}.json`), original);
-    await writeFile(join(root, '.reviewlab', 'sessions-v2', `${older.id}.json`), '{}');
+    await writeFile(join(root, '.hunkyard', 'sessions-v2', `${session.id}.json`), original);
+    await writeFile(join(root, '.hunkyard', 'sessions-v2', `${older.id}.json`), '{}');
     await expect(migrateFileHistory(root)).rejects.toThrow();
     expect(await createSqliteSessionStore(root).list()).toEqual([session]);
-    expect(await readFile(join(root, '.reviewlab', 'sessions-v2', `${session.id}.json`))).toEqual(
+    expect(await readFile(join(root, '.hunkyard', 'sessions-v2', `${session.id}.json`))).toEqual(
       original,
     );
   } finally {
@@ -458,6 +459,30 @@ test('schema3 inline run migration preserves history and stores immutable input 
     } finally {
       check.close();
     }
+  } finally {
+    await fixture.dispose();
+  }
+});
+
+test('history saved under the pre-rename .reviewlab folder stays readable and writable in place', async () => {
+  const fixture = await setup();
+  try {
+    const { root, session } = fixture;
+    const service = (store = createSqliteSessionStore(root)) =>
+      createReviewService({
+        root,
+        store,
+        captureStaged: async () => session.snapshot,
+        resolvePolicy: async () => session.policy,
+        loadTarget: async () => session.target,
+        agent: { review: async () => [] },
+      });
+    const created = await service().start();
+    await rename(join(root, '.hunkyard'), join(root, '.reviewlab'));
+    expect(await historyDatabasePath(root)).toBe(join(root, '.reviewlab', 'sqlite', 'history.db'));
+    await service().execute(created.id);
+    expect((await createSqliteSessionStore(root).get(created.id))?.status).toBe('completed');
+    await expect(lstat(join(root, '.hunkyard', 'sqlite'))).rejects.toThrow('ENOENT');
   } finally {
     await fixture.dispose();
   }

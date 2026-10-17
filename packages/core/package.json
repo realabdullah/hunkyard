@@ -1,5 +1,5 @@
 {
-  "name": "@reviewlab/core",
+  "name": "@hunkyard/core",
   "version": "0.1.0",
   "type": "module",
   "exports": {
@@ -7,6 +7,6 @@
     "./ports": "./src/ports.ts"
   },
   "dependencies": {
-    "@reviewlab/domain": "workspace:*"
+    "@hunkyard/domain": "workspace:*"
   }
 }

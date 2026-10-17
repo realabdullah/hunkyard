@@ -1,9 +1,9 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { ReviewServiceDependencies } from '@reviewlab/core/ports';
-import type { Publication, PullRequestContext } from '@reviewlab/domain';
-import { captureSnapshot } from '@reviewlab/git';
-import { createGitFixture } from '@reviewlab/testing';
+import type { ReviewServiceDependencies } from '@hunkyard/core/ports';
+import type { Publication, PullRequestContext } from '@hunkyard/domain';
+import { captureSnapshot } from '@hunkyard/git';
+import { createGitFixture } from '@hunkyard/testing';
 
 // Deterministic PR service for the browser journey; no GitHub network or credentials.
 export const createGitHubFixture = async (root: string) => {
@@ -31,14 +31,14 @@ export const createGitHubFixture = async (root: string) => {
     state: 'open',
   });
   const adapter: NonNullable<ReviewServiceDependencies['github']> = {
-    repository: async () => 'fixture/reviewlab',
+    repository: async () => 'fixture/hunkyard',
     head,
     capture: async (request, exclusions) => {
       const current = await head();
       const context: PullRequestContext = {
         repository: request.repository,
         number: request.number,
-        url: `https://github.com/fixture/reviewlab/pull/${request.number}`,
+        url: `https://github.com/fixture/hunkyard/pull/${request.number}`,
         title: 'Browser PR fixture',
         body: 'A saved PR with mandatory external review.',
         state: 'open',
@@ -52,7 +52,7 @@ export const createGitHubFixture = async (root: string) => {
             kind: 'inline',
             author: 'qodo-code-review[bot]',
             body: 'Qodo context: inspect denominator. Organizational review remains required.',
-            url: 'https://github.com/fixture/reviewlab/pull/12#discussion_r17',
+            url: 'https://github.com/fixture/hunkyard/pull/12#discussion_r17',
             path: 'example.ts',
             line: current.headSha === first ? 1 : null,
             side: 'RIGHT',
@@ -81,7 +81,7 @@ export const createGitHubFixture = async (root: string) => {
     },
     findPublication: async (entry) => posted.find((posted) => posted.id === entry.id)?.url,
     publish: async (entry) => {
-      const url = `https://github.com/fixture/reviewlab/pull/12#issuecomment-${posted.length + 1}`;
+      const url = `https://github.com/fixture/hunkyard/pull/12#issuecomment-${posted.length + 1}`;
       posted.push({ ...entry, url });
       return url;
     },

@@ -4,9 +4,9 @@
     "types": ["node"],
     "baseUrl": ".",
     "paths": {
-      "@reviewlab/*": ["packages/*/src/index.ts"],
-      "@reviewlab/core/ports": ["packages/core/src/ports.ts"],
-      "@reviewlab/server/*": ["apps/server/src/*.ts"]
+      "@hunkyard/*": ["packages/*/src/index.ts"],
+      "@hunkyard/core/ports": ["packages/core/src/ports.ts"],
+      "@hunkyard/server/*": ["apps/server/src/*.ts"]
     }
   },
   "include": [

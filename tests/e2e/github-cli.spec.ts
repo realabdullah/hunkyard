@@ -3,8 +3,8 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { delimiter, join } from 'node:path';
 import { promisify } from 'node:util';
+import { createGitFixture } from '@hunkyard/testing';
 import { expect, test } from '@playwright/test';
-import { createGitFixture } from '@reviewlab/testing';
 import { fixtureStatePath } from './runtime-path';
 
 const execute = promisify(execFile);
@@ -19,9 +19,9 @@ test('CLI PR launch uses gh contract and isolated pinned Git capture without che
   };
   const local = await createGitFixture();
   const remote = await createGitFixture();
-  const bin = await mkdtemp(join(tmpdir(), 'reviewlab-gh-cli-'));
+  const bin = await mkdtemp(join(tmpdir(), 'hunkyard-gh-cli-'));
   try {
-    await local.git('remote', 'add', 'origin', 'https://github.com/fixture/reviewlab.git');
+    await local.git('remote', 'add', 'origin', 'https://github.com/fixture/hunkyard.git');
     const base = (await remote.git('rev-parse', 'HEAD')).trim();
     await writeFile(
       join(remote.root, 'example.ts'),
@@ -41,17 +41,17 @@ test('CLI PR launch uses gh contract and isolated pinned Git capture without che
     await writeFile(
       responseFile,
       JSON.stringify({
-        [`repos/fixture/reviewlab/pulls/12`]: {
+        [`repos/fixture/hunkyard/pulls/12`]: {
           number: 12,
           title: 'CLI PR fixture',
           body: 'No external publication.',
-          html_url: 'https://github.com/fixture/reviewlab/pull/12',
+          html_url: 'https://github.com/fixture/hunkyard/pull/12',
           state: 'open',
-          base: { sha: base, repo: { full_name: 'fixture/reviewlab' } },
+          base: { sha: base, repo: { full_name: 'fixture/hunkyard' } },
           head: { sha: head },
         },
-        [`repos/fixture/reviewlab/compare/${base}...${head}`]: { merge_base_commit: { sha: base } },
-        [`repos/fixture/reviewlab/commits/${head}/check-runs?per_page=100&page=1`]: {
+        [`repos/fixture/hunkyard/compare/${base}...${head}`]: { merge_base_commit: { sha: base } },
+        [`repos/fixture/hunkyard/commits/${head}/check-runs?per_page=100&page=1`]: {
           total_count: 0,
           check_runs: [],
         },
@@ -75,7 +75,7 @@ process.stdout.write('HTTP/2.0 200 OK\\r\\nContent-Type: application/json\\r\\n\
 const { spawnSync } = require('node:child_process');
 let args = process.argv.slice(2);
 if (args.includes('fetch')) {
-  const index = args.indexOf('https://github.com/fixture/reviewlab.git');
+  const index = args.indexOf('https://github.com/fixture/hunkyard.git');
   if (index < 0) process.exit(2);
   args[index] = ${JSON.stringify(remote.root)};
   args = ['-c', 'protocol.file.allow=always', ...args];
@@ -98,7 +98,7 @@ process.exit(child.status ?? 1);
     const env = {
       ...process.env,
       PATH: `${bin}${delimiter}${process.env.PATH}`,
-      REVIEWLAB_USER_CONFIG: configPath,
+      HUNKYARD_USER_CONFIG: configPath,
     };
     const args = [
       'exec',

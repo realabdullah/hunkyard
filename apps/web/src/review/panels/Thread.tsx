@@ -1,4 +1,4 @@
-import type { Interaction } from '@reviewlab/domain';
+import type { Interaction } from '@hunkyard/domain';
 import { useEffect, useRef, useState } from 'react';
 import { api, eventStream, sseFrames } from '../../api';
 import { runIdOf } from '../../lib/meta';

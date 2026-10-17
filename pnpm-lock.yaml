@@ -41,25 +41,25 @@ importers:
 
   apps/cli:
     dependencies:
-      '@reviewlab/agents':
+      '@hunkyard/agents':
         specifier: workspace:*
         version: link:../../packages/agents
-      '@reviewlab/context':
+      '@hunkyard/context':
         specifier: workspace:*
         version: link:../../packages/context
-      '@reviewlab/core':
+      '@hunkyard/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@reviewlab/domain':
+      '@hunkyard/domain':
         specifier: workspace:*
         version: link:../../packages/domain
-      '@reviewlab/git':
+      '@hunkyard/git':
         specifier: workspace:*
         version: link:../../packages/git
-      '@reviewlab/server':
+      '@hunkyard/server':
         specifier: workspace:*
         version: link:../server
-      '@reviewlab/storage':
+      '@hunkyard/storage':
         specifier: workspace:*
         version: link:../../packages/storage
 
@@ -68,25 +68,25 @@ importers:
       '@hono/node-server':
         specifier: ^1.0.0
         version: 1.19.17(hono@4.13.13)
-      '@reviewlab/agents':
+      '@hunkyard/agents':
         specifier: workspace:*
         version: link:../../packages/agents
-      '@reviewlab/context':
+      '@hunkyard/context':
         specifier: workspace:*
         version: link:../../packages/context
-      '@reviewlab/core':
+      '@hunkyard/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@reviewlab/domain':
+      '@hunkyard/domain':
         specifier: workspace:*
         version: link:../../packages/domain
-      '@reviewlab/git':
+      '@hunkyard/git':
         specifier: workspace:*
         version: link:../../packages/git
-      '@reviewlab/providers':
+      '@hunkyard/providers':
         specifier: workspace:*
         version: link:../../packages/providers
-      '@reviewlab/storage':
+      '@hunkyard/storage':
         specifier: workspace:*
         version: link:../../packages/storage
       hono:
@@ -111,7 +111,7 @@ importers:
 
   apps/vscode:
     dependencies:
-      '@reviewlab/domain':
+      '@hunkyard/domain':
         specifier: workspace:*
         version: link:../../packages/domain
     devDependencies:
@@ -121,7 +121,7 @@ importers:
 
   apps/web:
     dependencies:
-      '@reviewlab/domain':
+      '@hunkyard/domain':
         specifier: workspace:*
         version: link:../../packages/domain
       monaco-editor:
@@ -149,19 +149,19 @@ importers:
 
   packages/agents:
     dependencies:
-      '@reviewlab/domain':
+      '@hunkyard/domain':
         specifier: workspace:*
         version: link:../domain
 
   packages/context:
     dependencies:
-      '@reviewlab/domain':
+      '@hunkyard/domain':
         specifier: workspace:*
         version: link:../domain
 
   packages/core:
     dependencies:
-      '@reviewlab/domain':
+      '@hunkyard/domain':
         specifier: workspace:*
         version: link:../domain
 
@@ -173,13 +173,13 @@ importers:
 
   packages/git:
     dependencies:
-      '@reviewlab/domain':
+      '@hunkyard/domain':
         specifier: workspace:*
         version: link:../domain
 
   packages/providers:
     dependencies:
-      '@reviewlab/domain':
+      '@hunkyard/domain':
         specifier: workspace:*
         version: link:../domain
       zod:
@@ -188,37 +188,37 @@ importers:
 
   packages/storage:
     dependencies:
-      '@reviewlab/domain':
+      '@hunkyard/domain':
         specifier: workspace:*
         version: link:../domain
 
   packages/testing:
     dependencies:
-      '@reviewlab/agents':
+      '@hunkyard/agents':
         specifier: workspace:*
         version: link:../agents
-      '@reviewlab/context':
+      '@hunkyard/context':
         specifier: workspace:*
         version: link:../context
-      '@reviewlab/core':
+      '@hunkyard/core':
         specifier: workspace:*
         version: link:../core
-      '@reviewlab/domain':
+      '@hunkyard/domain':
         specifier: workspace:*
         version: link:../domain
-      '@reviewlab/git':
+      '@hunkyard/git':
         specifier: workspace:*
         version: link:../git
-      '@reviewlab/providers':
+      '@hunkyard/providers':
         specifier: workspace:*
         version: link:../providers
-      '@reviewlab/server':
+      '@hunkyard/server':
         specifier: workspace:*
         version: link:../../apps/server
-      '@reviewlab/storage':
+      '@hunkyard/storage':
         specifier: workspace:*
         version: link:../storage
-      reviewlab-vscode:
+      hunkyard-vscode:
         specifier: workspace:*
         version: link:../../apps/vscode
 

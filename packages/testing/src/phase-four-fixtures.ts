@@ -1,5 +1,5 @@
-import { createCorrectnessReviewer } from '@reviewlab/agents';
-import { type AgentId, type FindingDraft } from '@reviewlab/domain';
+import { createCorrectnessReviewer } from '@hunkyard/agents';
+import { type AgentId, type FindingDraft } from '@hunkyard/domain';
 
 export const benchmarkCases: {
   agent: AgentId;

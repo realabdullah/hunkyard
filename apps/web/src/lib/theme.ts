@@ -1,14 +1,15 @@
 import { useEffect, useSyncExternalStore } from 'react';
+import { readStored } from './hooks';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 
-const key = 'reviewlab.theme';
+const key = 'hunkyard.theme';
 const media = window.matchMedia('(prefers-color-scheme: dark)');
 const listeners = new Set<() => void>();
 
 const read = (): ThemePreference => {
   try {
-    const value = localStorage.getItem(key);
+    const value = readStored(key);
     return value === 'light' || value === 'dark' ? value : 'system';
   } catch {
     return 'system';

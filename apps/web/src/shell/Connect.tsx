@@ -11,7 +11,7 @@ export const Connect = ({ connect }: { connect: (token: string) => void }) => {
         <BrandMark size={36} />
         <h1 id="connect-title">Connect to your local workspace</h1>
         <p>
-          ReviewLab runs on your machine. Start it from your project with <code>reviewlab</code> and
+          Hunkyard runs on your machine. Start it from your project with <code>hunkyard</code> and
           this page connects on its own. Started with <code>--no-browser</code>? Paste the token it
           printed.
         </p>

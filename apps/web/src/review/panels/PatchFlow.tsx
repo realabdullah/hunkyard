@@ -1,4 +1,4 @@
-import type { Interaction } from '@reviewlab/domain';
+import type { Interaction } from '@hunkyard/domain';
 import { useState } from 'react';
 import { api } from '../../api';
 import { isLive, runIdOf } from '../../lib/meta';

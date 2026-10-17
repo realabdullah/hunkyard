@@ -5,7 +5,7 @@ import {
   type PullRequestContext,
   PullRequestContextSchema,
   type PullRequestRequest,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 import { z } from 'zod';
 import { createGitHubClient, GitHubError, type GitHubTransport } from './transport';
 
@@ -181,18 +181,20 @@ export const createGitHubProvider = (transport?: GitHubTransport) => {
       });
     },
     findPublication: async (publication: Publication): Promise<string | undefined> => {
-      const marker = `<!-- reviewlab:${publication.id} -->`;
+      // Comments published before the rename carry `reviewlab` markers.
+      const markers = ['hunkyard', 'reviewlab'];
       const entries = await client.list(
         `repos/${publication.repository}/issues/${publication.number}/comments`,
       );
       const comments = entries.map((entry) => commentSchema.parse(entry));
       for (const value of comments) {
-        if (value.body?.includes(marker)) return value.html_url;
+        if (markers.some((name) => value.body?.includes(`<!-- ${name}:${publication.id} -->`)))
+          return value.html_url;
       }
       if (
         comments.some((value) =>
           publication.dedupeKeys.some((key) =>
-            value.body?.includes(`<!-- reviewlab-finding:${key} -->`),
+            markers.some((name) => value.body?.includes(`<!-- ${name}-finding:${key} -->`)),
           ),
         )
       )

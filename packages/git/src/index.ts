@@ -1,4 +1,4 @@
-import { CaptureRequestSchema, type ReviewSnapshot } from '@reviewlab/domain';
+import { CaptureRequestSchema, type ReviewSnapshot } from '@hunkyard/domain';
 import { type GitRunner, getRepoRoot, git, readHead, resolveCommit } from './commands';
 import { freezeLocalTree } from './local-tree';
 import { snapshotTrees } from './snapshot';
@@ -98,7 +98,7 @@ export const captureSnapshot = async (
     );
     snapshot.sourceIndexTree = index;
     snapshot.diagnostics?.push(
-      'Working content captured byte-exactly; clean filters and CRLF normalization are disabled. Dirty submodule files and untracked .reviewlab/ internal state are outside this scope.',
+      'Working content captured byte-exactly; clean filters and CRLF normalization are disabled. Dirty submodule files and untracked .hunkyard/ internal state are outside this scope.',
     );
     return snapshot;
   }

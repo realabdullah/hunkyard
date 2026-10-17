@@ -1,4 +1,4 @@
-import type { AgentId } from '@reviewlab/domain';
+import type { AgentId } from '@hunkyard/domain';
 
 export const agentRegistry: Record<AgentId, { name: string; focus: string }> = {
   correctness: {

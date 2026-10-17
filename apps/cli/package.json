@@ -1,14 +1,14 @@
 {
-  "name": "@reviewlab/cli",
+  "name": "@hunkyard/cli",
   "private": true,
   "type": "module",
   "dependencies": {
-    "@reviewlab/git": "workspace:*",
-    "@reviewlab/server": "workspace:*",
-    "@reviewlab/context": "workspace:*",
-    "@reviewlab/agents": "workspace:*",
-    "@reviewlab/storage": "workspace:*",
-    "@reviewlab/domain": "workspace:*",
-    "@reviewlab/core": "workspace:*"
+    "@hunkyard/git": "workspace:*",
+    "@hunkyard/server": "workspace:*",
+    "@hunkyard/context": "workspace:*",
+    "@hunkyard/agents": "workspace:*",
+    "@hunkyard/storage": "workspace:*",
+    "@hunkyard/domain": "workspace:*",
+    "@hunkyard/core": "workspace:*"
   }
 }

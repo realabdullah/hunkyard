@@ -8,7 +8,7 @@ import {
   type ReviewSession,
   reviewRulePaths,
   validateFindings,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 import { runReviewPlan } from './orchestration';
 import type { ReviewServiceDependencies } from './ports';
 

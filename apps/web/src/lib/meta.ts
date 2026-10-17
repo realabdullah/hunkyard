@@ -6,7 +6,7 @@ import type {
   Interaction,
   Provider,
   ReviewSession,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 
 export type Tint = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple' | 'gray';
 

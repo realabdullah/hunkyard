@@ -6,7 +6,7 @@ import {
   createCorrectnessReviewer,
   createModelGateway,
   probeModelCapabilities,
-} from '@reviewlab/agents';
+} from '@hunkyard/agents';
 import {
   loadAuthorizedProviderSecret,
   loadProviderSecret,
@@ -14,8 +14,8 @@ import {
   providerSecretPath,
   saveProviderSecret,
   updateConfig,
-} from '@reviewlab/context';
-import { type ModelTarget, ModelTargetSchema } from '@reviewlab/domain';
+} from '@hunkyard/context';
+import { type ModelTarget, ModelTargetSchema } from '@hunkyard/domain';
 import { expect, test } from 'vitest';
 import { fixtureSnapshot } from './replay';
 
@@ -53,8 +53,8 @@ test('actual loopback compatible runtimes list models, probe schema and review w
                   message: {
                     content: JSON.stringify(
                       'response_format' in body &&
-                        JSON.stringify(body.response_format).includes('reviewlab_probe')
-                        ? { reviewlab_probe: 'ok' }
+                        JSON.stringify(body.response_format).includes('hunkyard_probe')
+                        ? { hunkyard_probe: 'ok' }
                         : { findings: [] },
                     ),
                   },
@@ -162,7 +162,7 @@ test('failed structured probe makes limitations explicit and performs no fallbac
     async (_url, body) => {
       calls += 1;
       if (!body) return { data: [{ id: 'fixture' }] };
-      return { choices: [{ message: { content: '{"reviewlab_probe":"wrong"}' } }] };
+      return { choices: [{ message: { content: '{"hunkyard_probe":"wrong"}' } }] };
     },
   );
   expect(result.structuredOutput).toBe('failed');
@@ -170,11 +170,11 @@ test('failed structured probe makes limitations explicit and performs no fallbac
 });
 
 test('provider secrets are private, separate, removable and refused inside repo or symlink escapes', async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'reviewlab-secret-test-'));
-  const previous = process.env.REVIEWLAB_USER_CONFIG;
+  const directory = await mkdtemp(join(tmpdir(), 'hunkyard-secret-test-'));
+  const previous = process.env.HUNKYARD_USER_CONFIG;
   const root = join(directory, 'repo');
   await mkdir(root);
-  process.env.REVIEWLAB_USER_CONFIG = join(directory, 'private', 'config.json');
+  process.env.HUNKYARD_USER_CONFIG = join(directory, 'private', 'config.json');
   try {
     await saveProviderSecret(root, 'openai', 'fixture-secret');
     expect(await loadProviderSecret(root, 'openai')).toBe('fixture-secret');
@@ -184,24 +184,24 @@ test('provider secrets are private, separate, removable and refused inside repo 
     await chmod(providerSecretPath(), 0o600);
     await saveProviderSecret(root, 'openai', null);
     expect(await loadProviderSecret(root, 'openai')).toBeUndefined();
-    process.env.REVIEWLAB_USER_CONFIG = join(root, 'config.json');
+    process.env.HUNKYARD_USER_CONFIG = join(root, 'config.json');
     await expect(saveProviderSecret(root, 'openai', 'fixture-secret')).rejects.toThrow('outside');
     await symlink(root, join(directory, 'link'));
-    process.env.REVIEWLAB_USER_CONFIG = join(directory, 'link', 'nested', 'config.json');
+    process.env.HUNKYARD_USER_CONFIG = join(directory, 'link', 'nested', 'config.json');
     await expect(saveProviderSecret(root, 'openai', 'fixture-secret')).rejects.toThrow('outside');
   } finally {
-    if (previous === undefined) delete process.env.REVIEWLAB_USER_CONFIG;
-    else process.env.REVIEWLAB_USER_CONFIG = previous;
+    if (previous === undefined) delete process.env.HUNKYARD_USER_CONFIG;
+    else process.env.HUNKYARD_USER_CONFIG = previous;
     await rm(directory, { recursive: true, force: true });
   }
 });
 
 test('corrupt private credential JSON and unexpected keys never disclose credential excerpts', async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'reviewlab-secret-error-'));
+  const directory = await mkdtemp(join(tmpdir(), 'hunkyard-secret-error-'));
   const root = join(directory, 'repo');
   await mkdir(root);
-  const previous = process.env.REVIEWLAB_USER_CONFIG;
-  process.env.REVIEWLAB_USER_CONFIG = join(directory, 'private', 'config.json');
+  const previous = process.env.HUNKYARD_USER_CONFIG;
+  process.env.HUNKYARD_USER_CONFIG = join(directory, 'private', 'config.json');
   try {
     await saveProviderSecret(root, 'openai', 'fixture-secret');
     for (const malformed of ['{"openai": fixture-secret}', '{"fixture-secret":"value"}']) {
@@ -212,19 +212,19 @@ test('corrupt private credential JSON and unexpected keys never disclose credent
       await expect(loadProviderSecret(root, 'openai')).rejects.not.toThrow('fixture-secret');
     }
   } finally {
-    if (previous === undefined) delete process.env.REVIEWLAB_USER_CONFIG;
-    else process.env.REVIEWLAB_USER_CONFIG = previous;
+    if (previous === undefined) delete process.env.HUNKYARD_USER_CONFIG;
+    else process.env.HUNKYARD_USER_CONFIG = previous;
     await rm(directory, { recursive: true, force: true });
   }
 });
 
 test('consent revocation after invalid hosted output blocks repair even with environment key', async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'reviewlab-revoke-repair-'));
+  const directory = await mkdtemp(join(tmpdir(), 'hunkyard-revoke-repair-'));
   const root = join(directory, 'repo');
   await mkdir(root);
-  const previousConfig = process.env.REVIEWLAB_USER_CONFIG;
+  const previousConfig = process.env.HUNKYARD_USER_CONFIG;
   const previousKey = process.env.OPENAI_API_KEY;
-  process.env.REVIEWLAB_USER_CONFIG = join(directory, 'private', 'config.json');
+  process.env.HUNKYARD_USER_CONFIG = join(directory, 'private', 'config.json');
   process.env.OPENAI_API_KEY = 'fixture-environment-key';
   try {
     await updateConfig(root, {
@@ -257,8 +257,8 @@ test('consent revocation after invalid hosted output blocks repair even with env
       loadAuthorizedProviderSecret(root, { ...frozen, repository: 'another' }),
     ).rejects.toThrow('another repository');
   } finally {
-    if (previousConfig === undefined) delete process.env.REVIEWLAB_USER_CONFIG;
-    else process.env.REVIEWLAB_USER_CONFIG = previousConfig;
+    if (previousConfig === undefined) delete process.env.HUNKYARD_USER_CONFIG;
+    else process.env.HUNKYARD_USER_CONFIG = previousConfig;
     if (previousKey === undefined) delete process.env.OPENAI_API_KEY;
     else process.env.OPENAI_API_KEY = previousKey;
     await rm(directory, { recursive: true, force: true });

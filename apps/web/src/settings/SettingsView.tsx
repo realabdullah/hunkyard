@@ -4,7 +4,7 @@ import {
   type Provider,
   ProviderSchema,
   providerDefaults,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { providerMeta } from '../lib/meta';

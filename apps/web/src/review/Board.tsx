@@ -1,4 +1,4 @@
-import type { Finding } from '@reviewlab/domain';
+import type { Finding } from '@hunkyard/domain';
 import {
   type PointerEvent as ReactPointerEvent,
   useEffect,
@@ -43,7 +43,7 @@ export const Board = () => {
   const review = useReview();
   const { session, selection, select, status, interaction } = review;
   const canvas = useRef<CanvasHandle>(null);
-  const [offsets, setOffsets] = useStoredState<Offsets>(`reviewlab.board.${session.id}`, {});
+  const [offsets, setOffsets] = useStoredState<Offsets>(`hunkyard.board.${session.id}`, {});
   const [hover, setHover] = useState<string | null>(null);
   const stats = useMemo(() => diffStats(session.snapshot), [session.snapshot]);
   const layout = useMemo(() => layoutBoard(session, stats), [session, stats]);

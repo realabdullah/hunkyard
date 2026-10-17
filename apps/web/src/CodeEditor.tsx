@@ -1,4 +1,4 @@
-import type { Finding, ReviewSnapshot } from '@reviewlab/domain';
+import type { Finding, ReviewSnapshot } from '@hunkyard/domain';
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api.js';
 import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 import { useEffect, useRef, useState } from 'react';
@@ -14,7 +14,7 @@ import { IconButton, Kbd, Pill, Segmented } from './ui/primitives';
   getWorker: () => new EditorWorker(),
 };
 
-monaco.editor.defineTheme('reviewlab-dark', {
+monaco.editor.defineTheme('hunkyard-dark', {
   base: 'vs-dark',
   inherit: true,
   rules: [
@@ -45,7 +45,7 @@ monaco.editor.defineTheme('reviewlab-dark', {
     'editor.selectionBackground': '#ffffff1f',
   },
 });
-monaco.editor.defineTheme('reviewlab-light', {
+monaco.editor.defineTheme('hunkyard-light', {
   base: 'vs',
   inherit: true,
   rules: [
@@ -100,7 +100,7 @@ export const CodeEditor = ({
   const editorRef = useRef<monaco.editor.IStandaloneDiffEditor | null>(null);
   const [split, setSplit] = useState(true);
   const { dark } = useTheme();
-  useEffect(() => monaco.editor.setTheme(dark ? 'reviewlab-dark' : 'reviewlab-light'), [dark]);
+  useEffect(() => monaco.editor.setTheme(dark ? 'hunkyard-dark' : 'hunkyard-light'), [dark]);
   const change = snapshot.changes.find((entry) => entry.newPath === path || entry.oldPath === path);
   const original = snapshot.sources.find((entry) => entry.oid === change?.oldOid)?.text;
   const modified = snapshot.sources.find((entry) => entry.oid === change?.newOid)?.text;
@@ -123,7 +123,7 @@ export const CodeEditor = ({
     const before = monaco.editor.createModel(original ?? '', 'typescript');
     const after = monaco.editor.createModel(modified ?? '', 'typescript');
     const editor = monaco.editor.createDiffEditor(host.current, {
-      theme: isDark() ? 'reviewlab-dark' : 'reviewlab-light',
+      theme: isDark() ? 'hunkyard-dark' : 'hunkyard-light',
       readOnly: true,
       originalEditable: false,
       renderSideBySide: split,
@@ -152,8 +152,8 @@ export const CodeEditor = ({
         message: `${severityMeta[finding.severity].label}: ${finding.title} (suggested)`,
         severity: monaco.MarkerSeverity.Warning,
       }));
-    monaco.editor.setModelMarkers(before, 'reviewlab', markers('old'));
-    monaco.editor.setModelMarkers(after, 'reviewlab', markers('new'));
+    monaco.editor.setModelMarkers(before, 'hunkyard', markers('old'));
+    monaco.editor.setModelMarkers(after, 'hunkyard', markers('new'));
     const decorate = (target: monaco.editor.ICodeEditor, side: 'old' | 'new') =>
       target.createDecorationsCollection(
         findingsOn(side).map((finding) => ({

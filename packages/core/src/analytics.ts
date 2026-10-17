@@ -1,4 +1,4 @@
-import type { BenchmarkReport, Interaction, ReviewSession } from '@reviewlab/domain';
+import type { BenchmarkReport, Interaction, ReviewSession } from '@hunkyard/domain';
 
 export const recommendPresets = (report: BenchmarkReport) => {
   if (report.synthetic)

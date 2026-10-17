@@ -3,7 +3,7 @@ import {
   PatchApprovalSchema,
   PatchRequestSchema,
   RuleDecisionSchema,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 import type { InteractionAccess } from './interaction-access';
 import type { ReviewServiceDependencies } from './ports';
 export const createRemediationService = (

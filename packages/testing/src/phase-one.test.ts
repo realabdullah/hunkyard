@@ -2,13 +2,13 @@ import { createHash } from 'node:crypto';
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createCorrectnessReviewer } from '@reviewlab/agents';
-import { loadTarget, resolvePolicy, updateConfig } from '@reviewlab/context';
-import { createReviewService } from '@reviewlab/core';
-import { changedLines, type ModelTarget, validateFindings } from '@reviewlab/domain';
-import { captureStaged } from '@reviewlab/git';
-import { createApi } from '@reviewlab/server/app';
-import { createFileSessionStore, validateSnapshot } from '@reviewlab/storage';
+import { createCorrectnessReviewer } from '@hunkyard/agents';
+import { loadTarget, resolvePolicy, updateConfig } from '@hunkyard/context';
+import { createReviewService } from '@hunkyard/core';
+import { changedLines, type ModelTarget, validateFindings } from '@hunkyard/domain';
+import { captureStaged } from '@hunkyard/git';
+import { createApi } from '@hunkyard/server/app';
+import { createFileSessionStore, validateSnapshot } from '@hunkyard/storage';
 import { expect, test } from 'vitest';
 import { createGitFixture } from './git-fixture';
 
@@ -22,9 +22,9 @@ const withSetup = async (
   }) => Promise<void>,
 ) => {
   const fixture = await createGitFixture();
-  const configDir = await mkdtemp(join(tmpdir(), 'reviewlab-config-test-'));
-  const previous = process.env.REVIEWLAB_USER_CONFIG;
-  process.env.REVIEWLAB_USER_CONFIG = join(configDir, 'config.json');
+  const configDir = await mkdtemp(join(tmpdir(), 'hunkyard-config-test-'));
+  const previous = process.env.HUNKYARD_USER_CONFIG;
+  process.env.HUNKYARD_USER_CONFIG = join(configDir, 'config.json');
   try {
     await writeFile(join(fixture.root, 'example.ts'), 'export const value = 2;\n');
     await fixture.git('add', 'example.ts');
@@ -33,8 +33,8 @@ const withSetup = async (
     const policy = await resolvePolicy(fixture.root);
     await run({ ...fixture, snapshot, target, policy });
   } finally {
-    if (previous === undefined) delete process.env.REVIEWLAB_USER_CONFIG;
-    else process.env.REVIEWLAB_USER_CONFIG = previous;
+    if (previous === undefined) delete process.env.HUNKYARD_USER_CONFIG;
+    else process.env.HUNKYARD_USER_CONFIG = previous;
     await fixture.dispose();
     await rm(configDir, { recursive: true, force: true });
   }
@@ -94,7 +94,7 @@ test('retained snapshot survives index replacement/object pruning and rejects ta
       }),
     ).rejects.toThrow('immutable');
     await expect(store.save(saved)).rejects.toThrow('revision conflict');
-    await rm(join(root, '.reviewlab', 'snapshots-v2', `${snapshot.id}.json`));
+    await rm(join(root, '.hunkyard', 'snapshots-v2', `${snapshot.id}.json`));
     await expect(store.get(session.id)).rejects.toThrow('Immutable snapshot is missing');
   });
 });
@@ -188,9 +188,9 @@ test('cancellation is persistent and late completion cannot overwrite it; repeat
 test('rules are inspectable, exclusions are explicit, and repository config cannot grant cloud access', async () => {
   await withSetup(async ({ root }) => {
     await updateConfig(root, { rules: ['Global priority'], allowCloud: false });
-    await mkdir(join(root, '.reviewlab'));
+    await mkdir(join(root, '.hunkyard'));
     await writeFile(
-      join(root, '.reviewlab', 'config.json'),
+      join(root, '.hunkyard', 'config.json'),
       JSON.stringify({ rules: ['Project advisory'], exclude: ['vendor/'] }),
     );
     await writeFile(join(root, 'AGENTS.md'), 'Repository advisory');
@@ -205,7 +205,7 @@ test('rules are inspectable, exclusions are explicit, and repository config cann
       createHash('sha256').update('Repository advisory').digest('hex'),
     );
     await writeFile(
-      join(root, '.reviewlab', 'config.json'),
+      join(root, '.hunkyard', 'config.json'),
       JSON.stringify({ privacy: 'cloud-allowed', cloudConsent: true }),
     );
     await expect(resolvePolicy(root)).rejects.toThrow('only rules and exclude');
@@ -215,9 +215,9 @@ test('rules are inspectable, exclusions are explicit, and repository config cann
 
 test('storage rejects symlink escapes before any source is written outside the repository', async () => {
   await withSetup(async ({ root }) => {
-    const outside = await mkdtemp(join(tmpdir(), 'reviewlab-outside-'));
+    const outside = await mkdtemp(join(tmpdir(), 'hunkyard-outside-'));
     try {
-      await symlink(outside, join(root, '.reviewlab'));
+      await symlink(outside, join(root, '.hunkyard'));
       await expect(createFileSessionStore(root).list()).rejects.toThrow('symlink');
       await expect(readFile(join(outside, 'sessions-v2'), 'utf8')).rejects.toThrow();
     } finally {
@@ -250,7 +250,7 @@ test('Hono requires auth, exact Host/Origin and CSRF; authorized local flow capt
       host: '127.0.0.1:4317',
       authorization: `Bearer ${token}`,
       origin,
-      'x-reviewlab-csrf': '1',
+      'x-hunkyard-csrf': '1',
     };
     expect(
       (await app.request(`${origin}/api/v1/sessions`, { headers: { host: headers.host } })).status,
@@ -274,7 +274,7 @@ test('Hono requires auth, exact Host/Origin and CSRF; authorized local flow capt
       (
         await app.request(`${origin}/api/v1/sessions`, {
           method: 'POST',
-          headers: { ...headers, 'x-reviewlab-csrf': '0' },
+          headers: { ...headers, 'x-hunkyard-csrf': '0' },
         })
       ).status,
     ).toBe(403);
@@ -385,7 +385,7 @@ test('API rejects oversized mutation bodies and Unicode authorization without ru
       host: '127.0.0.1:4317',
       authorization: 'Bearer fixture-token',
       origin,
-      'x-reviewlab-csrf': '1',
+      'x-hunkyard-csrf': '1',
       'content-type': 'application/json',
     };
     expect(
@@ -421,7 +421,7 @@ test('unchanged context lines cannot become findings, and user consent config ca
     expect(
       validateFindings(snapshot, [{ ...draft, line: 2, evidence: 'changed = 2' }]),
     ).toHaveLength(1);
-    process.env.REVIEWLAB_USER_CONFIG = join(root, 'user-config.json');
+    process.env.HUNKYARD_USER_CONFIG = join(root, 'user-config.json');
     await expect(updateConfig(root, { allowCloud: true })).rejects.toThrow('outside');
   });
 });

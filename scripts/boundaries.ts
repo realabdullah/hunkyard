@@ -35,23 +35,23 @@ export const importedModules = (text: string, filename: string): string[] => {
 };
 
 export const allowedDependencies: Record<string, readonly string[]> = {
-  '@reviewlab/domain': ['zod'],
-  '@reviewlab/core': ['@reviewlab/domain'],
-  '@reviewlab/providers': ['@reviewlab/domain', 'zod'],
-  '@reviewlab/git': ['@reviewlab/domain'],
-  '@reviewlab/context': ['@reviewlab/domain'],
-  '@reviewlab/storage': ['@reviewlab/domain'],
-  '@reviewlab/agents': ['@reviewlab/domain'],
-  '@reviewlab/testing': [
-    'reviewlab-vscode',
-    '@reviewlab/providers',
-    '@reviewlab/context',
-    '@reviewlab/agents',
-    '@reviewlab/server',
-    '@reviewlab/domain',
-    '@reviewlab/core',
-    '@reviewlab/git',
-    '@reviewlab/storage',
+  '@hunkyard/domain': ['zod'],
+  '@hunkyard/core': ['@hunkyard/domain'],
+  '@hunkyard/providers': ['@hunkyard/domain', 'zod'],
+  '@hunkyard/git': ['@hunkyard/domain'],
+  '@hunkyard/context': ['@hunkyard/domain'],
+  '@hunkyard/storage': ['@hunkyard/domain'],
+  '@hunkyard/agents': ['@hunkyard/domain'],
+  '@hunkyard/testing': [
+    'hunkyard-vscode',
+    '@hunkyard/providers',
+    '@hunkyard/context',
+    '@hunkyard/agents',
+    '@hunkyard/server',
+    '@hunkyard/domain',
+    '@hunkyard/core',
+    '@hunkyard/git',
+    '@hunkyard/storage',
   ],
 };
 

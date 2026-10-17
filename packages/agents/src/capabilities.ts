@@ -4,7 +4,7 @@ import {
   OllamaModelsSchema,
   OpenAIChatSchema,
   OpenAIModelsSchema,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 import { chatBody } from './requests';
 import {
   createModelGateway,
@@ -53,14 +53,14 @@ export const probeModelCapabilities = async (
         target.provider === 'ollama' ? '/api/chat' : '/v1/chat/completions',
         chatBody(
           target,
-          [{ role: 'user', content: 'Return exactly the JSON object {"reviewlab_probe":"ok"}.' }],
+          [{ role: 'user', content: 'Return exactly the JSON object {"hunkyard_probe":"ok"}.' }],
           64,
           target.provider === 'deepseek'
             ? undefined
             : {
                 type: 'object',
-                properties: { reviewlab_probe: { type: 'string', enum: ['ok'] } },
-                required: ['reviewlab_probe'],
+                properties: { hunkyard_probe: { type: 'string', enum: ['ok'] } },
+                required: ['hunkyard_probe'],
                 additionalProperties: false,
               },
         ),
@@ -73,7 +73,7 @@ export const probeModelCapabilities = async (
       if (typeof raw !== 'string') throw new Error('Missing JSON output.');
       const parsed: unknown = JSON.parse(raw);
       result.structuredOutput =
-        JSON.stringify(parsed) === '{"reviewlab_probe":"ok"}' ? 'verified' : 'failed';
+        JSON.stringify(parsed) === '{"hunkyard_probe":"ok"}' ? 'verified' : 'failed';
     } catch (error) {
       if (signal.aborted) throw error;
       result.structuredOutput = 'failed';

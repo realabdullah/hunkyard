@@ -6,7 +6,7 @@ import {
   PullRequestRequestSchema,
   pullRequestLocation,
   redactSecrets,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 import type { ReviewServiceDependencies } from './ports';
 
 export const assertGitHubAccess = async (deps: ReviewServiceDependencies, consent: boolean) => {
@@ -126,14 +126,14 @@ export const createPullRequestService = (
         const publicationId = globalThis.crypto.randomUUID();
         const body = redactSecrets(
           [
-            `ReviewLab local review of ${pr.headSha} (base ${pr.baseSha}; merge base ${pr.mergeBaseSha}).`,
+            `Hunkyard local review of ${pr.headSha} (base ${pr.baseSha}; merge base ${pr.mergeBaseSha}).`,
             'AI-assisted findings for human assessment. This comment does not approve the PR or satisfy mandatory Qodo/organizational review.',
             ...findings.map((finding) => {
               const url = pullRequestLocation(value.snapshot, finding).sourceUrl;
               return `### ${finding.severity.toUpperCase()}: ${escapeMarkdown(finding.title)}\n[${escapeMarkdown(finding.file)}:${finding.line} (${finding.side})](${url})\n\n${escapeMarkdown(finding.explanation)}\n\nEvidence: ${escapeMarkdown(finding.evidence)}\n\nRecommendation: ${escapeMarkdown(finding.recommendation)}`;
             }),
-            ...dedupeKeys.map((key) => `<!-- reviewlab-finding:${key} -->`),
-            `<!-- reviewlab:${publicationId} -->`,
+            ...dedupeKeys.map((key) => `<!-- hunkyard-finding:${key} -->`),
+            `<!-- hunkyard:${publicationId} -->`,
           ].join('\n\n'),
         );
         if (body.length > 60000)

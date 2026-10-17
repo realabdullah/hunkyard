@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { chmod, lstat, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { assertCurrentAuthorization, ModelConfigSchema, type ModelTarget } from '@reviewlab/domain';
+import { assertCurrentAuthorization, ModelConfigSchema, type ModelTarget } from '@hunkyard/domain';
 import { assertOutsideRepo, configPath, loadTarget } from './config';
 
 export const providerSecretPath = () => join(dirname(configPath()), 'provider-secrets.json');

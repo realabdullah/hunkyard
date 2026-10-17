@@ -1,4 +1,4 @@
-import type { ModelTarget, SessionSummary } from '@reviewlab/domain';
+import type { ModelTarget, SessionSummary } from '@hunkyard/domain';
 import {
   createContext,
   type ReactNode,
@@ -51,7 +51,7 @@ export const WorkspaceProvider = ({
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [busy, setBusy] = useState(false);
   const [view, setView] = useState<View>({ kind: 'home' });
-  const [tabs, setTabs] = useStoredState<string[]>('reviewlab.tabs', []);
+  const [tabs, setTabs] = useStoredState<string[]>('hunkyard.tabs', []);
   const failures = useRef(0);
   const reload = useCallback(async () => {
     try {
@@ -67,7 +67,7 @@ export const WorkspaceProvider = ({
     } catch (error) {
       failures.current += 1;
       if (failures.current === 2)
-        toast(error instanceof Error ? error.message : 'Lost connection to ReviewLab', 'error');
+        toast(error instanceof Error ? error.message : 'Lost connection to Hunkyard', 'error');
     }
   }, [toast, setTabs]);
   useEffect(() => {

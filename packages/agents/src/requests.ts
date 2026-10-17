@@ -1,4 +1,4 @@
-import type { ModelTarget } from '@reviewlab/domain';
+import type { ModelTarget } from '@hunkyard/domain';
 
 type Message = { role: string; content: string };
 export const chatBody = (
@@ -80,7 +80,7 @@ export const chatBody = (
             mode === 'schema'
               ? {
                   type: 'json_schema',
-                  json_schema: { name: 'reviewlab', strict: true, schema: outputSchema },
+                  json_schema: { name: 'hunkyard', strict: true, schema: outputSchema },
                 }
               : { type: 'json_object' },
         }),

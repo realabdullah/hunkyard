@@ -1,4 +1,4 @@
-import type { DomainEvent, Interaction, ReviewSession, ReviewSnapshot } from '@reviewlab/domain';
+import type { DomainEvent, Interaction, ReviewSession, ReviewSnapshot } from '@hunkyard/domain';
 import type { SessionStore } from './file-store';
 
 export type DurableEvent = DomainEvent;

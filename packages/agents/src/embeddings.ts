@@ -1,4 +1,4 @@
-import { type ModelTarget, ModelTargetSchema, redactSecrets } from '@reviewlab/domain';
+import { type ModelTarget, ModelTargetSchema, redactSecrets } from '@hunkyard/domain';
 import { createModelGateway, type ModelTransport, validateTarget } from './transport';
 
 export const createLocalEmbedder = (

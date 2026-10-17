@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { ReviewPolicyBundle, ShareablePolicy } from '@reviewlab/domain';
+import type { ReviewPolicyBundle, ShareablePolicy } from '@hunkyard/domain';
 
 export const withSharedPolicy = (
   policy: ReviewPolicyBundle,

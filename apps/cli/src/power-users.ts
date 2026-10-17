@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
-import { readJson } from '@reviewlab/context';
-import { effectivenessAnalytics, recommendPresets } from '@reviewlab/core';
-import { BenchmarkReportSchema, ShareablePolicySchema } from '@reviewlab/domain';
-import type { createRuntime } from '@reviewlab/server/runtime';
+import { readJson } from '@hunkyard/context';
+import { effectivenessAnalytics, recommendPresets } from '@hunkyard/core';
+import { BenchmarkReportSchema, ShareablePolicySchema } from '@hunkyard/domain';
+import type { createRuntime } from '@hunkyard/server/runtime';
 
 type Runtime = Awaited<ReturnType<typeof createRuntime>>;
 export const planFingerprint = (plan: unknown) =>

@@ -1,4 +1,4 @@
-/** ReviewLab mark: a lens over two diff lines, in the current ink. */
+/** Hunkyard mark: a lens over two diff lines, in the current ink. */
 export const BrandMark = ({ size = 26 }: { size?: number }) => (
   <svg
     className="brand-mark"

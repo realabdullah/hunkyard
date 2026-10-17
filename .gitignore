@@ -1,6 +1,11 @@
 node_modules
 dist
 .env
+.hunkyard/sessions
+.hunkyard/sessions-v2
+.hunkyard/snapshots-v2
+.hunkyard/sqlite
+# Pre-rename state folder
 .reviewlab/sessions
 .reviewlab/sessions-v2
 .reviewlab/snapshots-v2

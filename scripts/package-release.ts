@@ -46,13 +46,13 @@ await writeFile(
   `${directory}/package.json`,
   JSON.stringify(
     {
-      name: '@reviewlab/cli',
+      name: '@hunkyard/cli',
       version: '0.1.0-rc.3',
       description: 'Local-first Git review workspace',
       type: 'module',
-      bin: { reviewlab: 'cli.mjs' },
+      bin: { hunkyard: 'cli.mjs' },
       files: ['cli.mjs', 'web', 'examples', 'CHANGELOG.md', 'bundled-dependencies.json'],
-      engines: { node: '>=22.22.0 <23' },
+      engines: { node: '>=22.22.0' },
     },
     null,
     2,

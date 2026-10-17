@@ -1,4 +1,4 @@
-import { type AgentId, isHostedProvider, type ReviewPlan } from '@reviewlab/domain';
+import { type AgentId, isHostedProvider, type ReviewPlan } from '@hunkyard/domain';
 import { agentMeta, providerMeta } from '../lib/meta';
 import { Icon } from '../ui/Icon';
 import { Avatar } from '../ui/primitives';

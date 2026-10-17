@@ -1,4 +1,4 @@
-import type { Finding, FindingStatus } from '@reviewlab/domain';
+import type { Finding, FindingStatus } from '@hunkyard/domain';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useHotkeys } from '../lib/hooks';
 import {

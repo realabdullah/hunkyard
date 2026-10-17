@@ -3,17 +3,17 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { loadTarget, updateConfig } from '@reviewlab/context';
-import { createRuntime, startServer } from '@reviewlab/server/runtime';
-import { createSqliteSessionStore } from '@reviewlab/storage';
+import { loadTarget, updateConfig } from '@hunkyard/context';
+import { createRuntime, startServer } from '@hunkyard/server/runtime';
+import { createSqliteSessionStore } from '@hunkyard/storage';
 import { expect, test } from 'vitest';
 import { createGitFixture } from './git-fixture';
 
 const setup = async () => {
   const fixture = await createGitFixture();
-  const config = await mkdtemp(join(tmpdir(), 'reviewlab-phase2-'));
-  const previous = process.env.REVIEWLAB_USER_CONFIG;
-  process.env.REVIEWLAB_USER_CONFIG = join(config, 'config.json');
+  const config = await mkdtemp(join(tmpdir(), 'hunkyard-phase2-'));
+  const previous = process.env.HUNKYARD_USER_CONFIG;
+  process.env.HUNKYARD_USER_CONFIG = join(config, 'config.json');
   await writeFile(join(fixture.root, 'example.ts'), 'export const value = 2;\n');
   await fixture.git('add', 'example.ts');
   let seen: (() => void) | undefined;
@@ -51,15 +51,15 @@ const setup = async () => {
   return {
     ...fixture,
     model,
-    configFile: process.env.REVIEWLAB_USER_CONFIG,
+    configFile: process.env.HUNKYARD_USER_CONFIG,
     onRequest: (callback: () => void) => {
       seen = callback;
     },
     dispose: async () => {
       model.closeAllConnections();
       await new Promise<void>((resolve) => model.close(() => resolve()));
-      if (previous === undefined) delete process.env.REVIEWLAB_USER_CONFIG;
-      else process.env.REVIEWLAB_USER_CONFIG = previous;
+      if (previous === undefined) delete process.env.HUNKYARD_USER_CONFIG;
+      else process.env.HUNKYARD_USER_CONFIG = previous;
       await fixture.dispose();
       await rm(config, { recursive: true, force: true });
     },
@@ -126,7 +126,7 @@ test('actual killed reviewer is recovered once by new runtime; a reader never re
         '--json',
       ],
       {
-        env: { ...process.env, REVIEWLAB_USER_CONFIG: fixture.configFile },
+        env: { ...process.env, HUNKYARD_USER_CONFIG: fixture.configFile },
         stdio: ['ignore', 'pipe', 'pipe'],
       },
     );
@@ -183,7 +183,7 @@ test('authenticated SSE replays persisted events from a cursor and diagnostics e
     const headers = {
       authorization: `Bearer ${server.token}`,
       origin: server.origin,
-      'x-reviewlab-csrf': '1',
+      'x-hunkyard-csrf': '1',
       'content-type': 'application/json',
     };
     const first = await server.service.start();

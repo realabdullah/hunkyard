@@ -5,7 +5,7 @@ import type {
   FindingStatus,
   Interaction,
   ReviewSession,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 import { createContext, useContext } from 'react';
 import { api } from '../api';
 import { runIdOf, statusOf } from '../lib/meta';

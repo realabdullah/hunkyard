@@ -3,7 +3,7 @@ import { constants } from 'node:fs';
 import { lstat, mkdtemp, open, readlink, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative } from 'node:path';
-import { excludedPath } from '@reviewlab/domain';
+import { excludedPath, isStatePath } from '@hunkyard/domain';
 import { getRepoRoot, git, resolveCommit, runBytes, treeEntries } from './commands';
 
 const absent = (error: unknown) =>
@@ -57,7 +57,7 @@ export const freezeLocalTree = async (
   includeUntracked: boolean,
   paths: string[],
 ): Promise<{ tree: string; fingerprint: string }> => {
-  const directory = await mkdtemp(join(tmpdir(), 'reviewlab-index-'));
+  const directory = await mkdtemp(join(tmpdir(), 'hunkyard-index-'));
   const index = join(directory, 'index');
   try {
     await runBytes(root, ['read-tree', indexTree], { index });
@@ -69,7 +69,7 @@ export const freezeLocalTree = async (
     const untracked = includeUntracked
       ? (await git(root, 'ls-files', '--others', '--exclude-standard', '-z'))
           .split('\0')
-          .filter((path) => Boolean(path) && !path.startsWith('.reviewlab/'))
+          .filter((path) => Boolean(path) && !isStatePath(path))
       : [];
     const records = [
       ...tracked,

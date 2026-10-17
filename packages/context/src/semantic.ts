@@ -1,4 +1,4 @@
-import type { ContextManifest } from '@reviewlab/domain';
+import type { ContextManifest } from '@hunkyard/domain';
 
 export type SemanticRetriever = {
   provenance: Omit<NonNullable<ContextManifest['semantic']>, 'candidates'>;

@@ -1,6 +1,6 @@
 import { timingSafeEqual } from 'node:crypto';
-import type { createReviewService } from '@reviewlab/core';
-import type { ModelTarget } from '@reviewlab/domain';
+import type { createReviewService } from '@hunkyard/core';
+import type { ModelTarget } from '@hunkyard/domain';
 import {
   CaptureRequestSchema,
   ExportRequestSchema,
@@ -13,7 +13,7 @@ import {
   RunRequestSchema,
   SecretRequestSchema,
   StartReviewSchema,
-} from '@reviewlab/domain';
+} from '@hunkyard/domain';
 import { type Context, Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { streamSSE } from 'hono/streaming';
@@ -63,7 +63,7 @@ export const createApi = (deps: {
       const origin = c.req.header('origin');
       if (origin && !origins.has(origin)) return reject(403, 'Origin not allowed');
       if (!['GET', 'HEAD'].includes(c.req.method)) {
-        if (!origin || !origins.has(origin) || c.req.header('x-reviewlab-csrf') !== '1')
+        if (!origin || !origins.has(origin) || c.req.header('x-hunkyard-csrf') !== '1')
           return reject(403, 'Mutation requires exact Origin and CSRF header');
         if (Number(c.req.header('content-length') ?? 0) > 64_000)
           return reject(413, 'Request too large');
@@ -228,7 +228,7 @@ export const createApi = (deps: {
   const launch = (id: string) => {
     void deps.service.execute(id).catch(async () => {
       console.error(
-        'Review state could not be persisted. Run reviewlab doctor and inspect storage.',
+        'Review state could not be persisted. Run hunkyard doctor and inspect storage.',
       );
       try {
         await deps.service.cancel(id);

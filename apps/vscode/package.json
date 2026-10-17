@@ -1,7 +1,7 @@
 {
-  "name": "reviewlab-vscode",
-  "displayName": "ReviewLab",
-  "publisher": "reviewlab",
+  "name": "hunkyard-vscode",
+  "displayName": "Hunkyard",
+  "publisher": "hunkyard",
   "description": "Explicit, local-first Git reviews with frozen finding sources.",
   "version": "0.1.1",
   "private": true,
@@ -23,40 +23,52 @@
   "contributes": {
     "commands": [
       {
-        "command": "reviewlab.reviewStaged",
-        "title": "ReviewLab: Review Staged Changes"
+        "command": "hunkyard.reviewStaged",
+        "title": "Hunkyard: Review Staged Changes"
       },
       {
-        "command": "reviewlab.history",
-        "title": "ReviewLab: Open Local Review History"
+        "command": "hunkyard.history",
+        "title": "Hunkyard: Open Local Review History"
       },
       {
-        "command": "reviewlab.clear",
-        "title": "ReviewLab: Clear Findings View"
+        "command": "hunkyard.clear",
+        "title": "Hunkyard: Clear Findings View"
       }
     ],
     "configuration": {
-      "title": "ReviewLab",
+      "title": "Hunkyard",
       "properties": {
-        "reviewlab.executable": {
+        "hunkyard.executable": {
           "type": "string",
-          "default": "reviewlab",
+          "default": "hunkyard",
           "scope": "machine",
-          "description": "Trusted installed ReviewLab CLI executable. Only user settings are read; repository settings are ignored."
+          "description": "Trusted installed Hunkyard CLI executable. Only user settings are read; repository settings are ignored."
         },
-        "reviewlab.nodeExecutable": {
+        "hunkyard.nodeExecutable": {
           "type": "string",
           "default": "node",
           "scope": "machine",
-          "description": "Node 22.22.x executable for an absolute cli.mjs path, required on Windows. Only user settings are read."
+          "description": "Node.js 22.22+ executable for an absolute cli.mjs path, required on Windows. Only user settings are read."
+        },
+        "reviewlab.executable": {
+          "type": "string",
+          "scope": "machine",
+          "deprecationMessage": "Renamed to hunkyard.executable. Still read when hunkyard.executable is not set.",
+          "markdownDeprecationMessage": "Renamed to `#hunkyard.executable#`. Still read when `hunkyard.executable` is not set."
+        },
+        "reviewlab.nodeExecutable": {
+          "type": "string",
+          "scope": "machine",
+          "deprecationMessage": "Renamed to hunkyard.nodeExecutable. Still read when hunkyard.nodeExecutable is not set.",
+          "markdownDeprecationMessage": "Renamed to `#hunkyard.nodeExecutable#`. Still read when `hunkyard.nodeExecutable` is not set."
         }
       }
     },
     "views": {
       "explorer": [
         {
-          "id": "reviewlab.findings",
-          "name": "ReviewLab Findings"
+          "id": "hunkyard.findings",
+          "name": "Hunkyard Findings"
         }
       ]
     }
@@ -65,7 +77,7 @@
     "@types/vscode": "1.95.0"
   },
   "dependencies": {
-    "@reviewlab/domain": "workspace:*"
+    "@hunkyard/domain": "workspace:*"
   },
   "exports": {
     "./bridge": "./src/bridge.ts"
