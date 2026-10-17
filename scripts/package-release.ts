@@ -22,6 +22,7 @@ await chmod(`${directory}/cli.mjs`, 0o755);
 await cp('apps/web/dist', `${directory}/web`, { recursive: true });
 await cp('README.md', `${directory}/README.md`);
 await cp('CHANGELOG.md', `${directory}/CHANGELOG.md`);
+await cp('LICENSE', `${directory}/LICENSE`);
 await cp('examples', `${directory}/examples`, { recursive: true });
 const require = createRequire(import.meta.url);
 const dependencies: Record<string, string> = {};
@@ -47,17 +48,21 @@ await writeFile(
   JSON.stringify(
     {
       name: '@hunkyard/cli',
-      version: '0.1.0-rc.3',
-      description: 'Local-first Git review workspace',
+      version: '0.1.0',
+      description: 'Local-first AI code review workspace for Git',
+      keywords: ['code-review', 'git', 'ai', 'local-first', 'ollama', 'cli'],
+      license: 'MIT',
+      homepage: 'https://hunkyard.dev',
+      repository: { type: 'git', url: 'git+https://github.com/realabdullah/hunkyard.git' },
+      bugs: { url: 'https://github.com/realabdullah/hunkyard/issues' },
       type: 'module',
       bin: { hunkyard: 'cli.mjs' },
-      files: ['cli.mjs', 'web', 'examples', 'CHANGELOG.md', 'bundled-dependencies.json'],
+      files: ['cli.mjs', 'web', 'examples', 'CHANGELOG.md', 'LICENSE', 'bundled-dependencies.json'],
       engines: { node: '>=22.22.0' },
+      publishConfig: { access: 'public' },
     },
     null,
     2,
   ),
 );
-console.log(
-  `Release candidate prepared at ${directory}. Pack locally; publication requires owner approval.`,
-);
+console.log(`Release prepared at ${directory}. Pack locally; publication requires owner approval.`);

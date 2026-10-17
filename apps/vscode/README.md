@@ -5,7 +5,7 @@ Run Hunkyard reviews and browse their findings without leaving VS Code.
 ## Requirements
 
 - VS Code 1.95 or later
-- The Hunkyard CLI 0.1.0-rc.3 or later, installed separately, with Node.js 22.22 or later
+- The Hunkyard CLI 0.1.0 or later (`npm i -g @hunkyard/cli`), installed separately, with Node.js 22.22 or later
 - A model configured through the CLI (`hunkyard config`)
 
 ## Install

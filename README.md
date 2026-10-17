@@ -13,20 +13,15 @@ Local-first AI code review for Git. Hunkyard captures a frozen snapshot of your 
 
 - Node.js 22.22 or later (22 and 24 LTS are tested)
 - Git
-- pnpm 10 (only to build and install)
 - A model: a local runtime such as [Ollama](https://ollama.com), or an API key for a hosted provider
 
 ## Install
 
-From this repository:
-
 ```sh
-corepack enable
-pnpm install --frozen-lockfile
-pnpm package:release
-pnpm --dir dist/release pack --pack-destination ../
-npm install --global ./dist/hunkyard-cli-0.1.0-rc.3.tgz
+npm install --global @hunkyard/cli
 ```
+
+Or run it once without installing: `npx @hunkyard/cli`.
 
 ## Usage
 
@@ -80,11 +75,15 @@ Publishing a summary comment back to the PR is a separate, confirmed step in the
 
 ### VS Code
 
-See the [extension README](apps/vscode/README.md).
+See the [extension README](https://github.com/realabdullah/hunkyard/blob/main/apps/vscode/README.md).
 
 ## Development
 
+Requires pnpm 10.
+
 ```sh
+corepack enable
+pnpm install --frozen-lockfile
 pnpm exec playwright install chromium
 pnpm build
 HUNKYARD_REPO=/path/to/a/repo pnpm dev   # API + UI on http://127.0.0.1:5173
@@ -92,3 +91,7 @@ pnpm check                                # lint, typecheck, tests, build and e2
 ```
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org/).
+
+## License
+
+MIT
