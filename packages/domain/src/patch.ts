@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { STATE_DIRECTORIES } from './state';
 
 const path = z
   .string()
@@ -10,9 +9,7 @@ const path = z
       !value.startsWith('/') &&
       !value.includes('\\') &&
       !value.includes('\0') &&
-      !value
-        .split('/')
-        .some((part) => !part || ['.', '..', '.git', ...STATE_DIRECTORIES].includes(part)) &&
+      !value.split('/').some((part) => !part || ['.', '..', '.git', '.hunkyard'].includes(part)) &&
       !value.includes(':'),
   );
 export const PatchRequestSchema = z

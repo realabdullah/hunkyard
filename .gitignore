@@ -5,11 +5,6 @@ dist
 .hunkyard/sessions-v2
 .hunkyard/snapshots-v2
 .hunkyard/sqlite
-# Pre-rename state folder
-.reviewlab/sessions
-.reviewlab/sessions-v2
-.reviewlab/snapshots-v2
-.reviewlab/sqlite
 
 # Generated verification artifacts and local credentials
 playwright-report/

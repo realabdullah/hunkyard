@@ -15,7 +15,6 @@ import { createFileSessionStore, validateSessionIntegrity, validateSnapshot } fr
 import { absent, getSession, transaction, withDatabase, writeSession } from './sqlite-database';
 import { alive, appendEvent, cleanup, journal, runKey, terminal } from './sqlite-journal';
 import { readRun } from './sqlite-runs';
-import { stateDirectory } from './state-directory';
 
 export const createSqliteSessionStore = (root: string): DurableStore => {
   let leaseToken: string | undefined;
@@ -321,7 +320,7 @@ const sourceHistory = async (root: string) => {
   // Validate every source record before opening the destination. Never modify/delete inputs.
   let files: string[];
   try {
-    const source = join(await stateDirectory(root, 'sessions-v2'), 'sessions-v2');
+    const source = join(root, '.hunkyard', 'sessions-v2');
     const stat = await lstat(source);
     if (!stat.isDirectory() || stat.isSymbolicLink())
       throw new Error('History directory must not be a symlink.');

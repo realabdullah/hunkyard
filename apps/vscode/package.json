@@ -49,18 +49,6 @@
           "default": "node",
           "scope": "machine",
           "description": "Node.js 22.22+ executable for an absolute cli.mjs path, required on Windows. Only user settings are read."
-        },
-        "reviewlab.executable": {
-          "type": "string",
-          "scope": "machine",
-          "deprecationMessage": "Renamed to hunkyard.executable. Still read when hunkyard.executable is not set.",
-          "markdownDeprecationMessage": "Renamed to `#hunkyard.executable#`. Still read when `hunkyard.executable` is not set."
-        },
-        "reviewlab.nodeExecutable": {
-          "type": "string",
-          "scope": "machine",
-          "deprecationMessage": "Renamed to hunkyard.nodeExecutable. Still read when hunkyard.nodeExecutable is not set.",
-          "markdownDeprecationMessage": "Renamed to `#hunkyard.nodeExecutable#`. Still read when `hunkyard.nodeExecutable` is not set."
         }
       }
     },

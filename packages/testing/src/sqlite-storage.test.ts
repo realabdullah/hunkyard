@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
-import { lstat, readdir, readFile, rename, symlink, writeFile } from 'node:fs/promises';
+import { lstat, readdir, readFile, symlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { promisify } from 'node:util';
@@ -10,7 +10,6 @@ import { captureStaged } from '@hunkyard/git';
 import {
   createFileSessionStore,
   createSqliteSessionStore,
-  historyDatabasePath,
   migrateFileHistory,
 } from '@hunkyard/storage';
 import { expect, test } from 'vitest';
@@ -459,30 +458,6 @@ test('schema3 inline run migration preserves history and stores immutable input 
     } finally {
       check.close();
     }
-  } finally {
-    await fixture.dispose();
-  }
-});
-
-test('history saved under the pre-rename .reviewlab folder stays readable and writable in place', async () => {
-  const fixture = await setup();
-  try {
-    const { root, session } = fixture;
-    const service = (store = createSqliteSessionStore(root)) =>
-      createReviewService({
-        root,
-        store,
-        captureStaged: async () => session.snapshot,
-        resolvePolicy: async () => session.policy,
-        loadTarget: async () => session.target,
-        agent: { review: async () => [] },
-      });
-    const created = await service().start();
-    await rename(join(root, '.hunkyard'), join(root, '.reviewlab'));
-    expect(await historyDatabasePath(root)).toBe(join(root, '.reviewlab', 'sqlite', 'history.db'));
-    await service().execute(created.id);
-    expect((await createSqliteSessionStore(root).get(created.id))?.status).toBe('completed');
-    await expect(lstat(join(root, '.hunkyard', 'sqlite'))).rejects.toThrow('ENOENT');
   } finally {
     await fixture.dispose();
   }

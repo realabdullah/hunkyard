@@ -3,7 +3,7 @@ import { constants } from 'node:fs';
 import { lstat, mkdtemp, open, readlink, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative } from 'node:path';
-import { excludedPath, isStatePath } from '@hunkyard/domain';
+import { excludedPath } from '@hunkyard/domain';
 import { getRepoRoot, git, resolveCommit, runBytes, treeEntries } from './commands';
 
 const absent = (error: unknown) =>
@@ -69,7 +69,7 @@ export const freezeLocalTree = async (
     const untracked = includeUntracked
       ? (await git(root, 'ls-files', '--others', '--exclude-standard', '-z'))
           .split('\0')
-          .filter((path) => Boolean(path) && !isStatePath(path))
+          .filter((path) => Boolean(path) && !path.startsWith('.hunkyard/'))
       : [];
     const records = [
       ...tracked,

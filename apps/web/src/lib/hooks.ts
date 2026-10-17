@@ -144,14 +144,10 @@ export const useHotkeys = (
   }, [enabled]);
 };
 
-/** Reads a `hunkyard.*` key, falling back to the value saved under its pre-rename `reviewlab.*` key. */
-export const readStored = (key: string) =>
-  localStorage.getItem(key) ?? localStorage.getItem(key.replace(/^hunkyard\./, 'reviewlab.'));
-
 export const useStoredState = <T>(key: string, initial: T) => {
   const [value, setValue] = useState<T>(() => {
     try {
-      const raw = readStored(key);
+      const raw = localStorage.getItem(key);
       return raw ? (JSON.parse(raw) as T) : initial;
     } catch {
       return initial;

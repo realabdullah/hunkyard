@@ -181,20 +181,18 @@ export const createGitHubProvider = (transport?: GitHubTransport) => {
       });
     },
     findPublication: async (publication: Publication): Promise<string | undefined> => {
-      // Comments published before the rename carry `reviewlab` markers.
-      const markers = ['hunkyard', 'reviewlab'];
+      const marker = `<!-- hunkyard:${publication.id} -->`;
       const entries = await client.list(
         `repos/${publication.repository}/issues/${publication.number}/comments`,
       );
       const comments = entries.map((entry) => commentSchema.parse(entry));
       for (const value of comments) {
-        if (markers.some((name) => value.body?.includes(`<!-- ${name}:${publication.id} -->`)))
-          return value.html_url;
+        if (value.body?.includes(marker)) return value.html_url;
       }
       if (
         comments.some((value) =>
           publication.dedupeKeys.some((key) =>
-            markers.some((name) => value.body?.includes(`<!-- ${name}-finding:${key} -->`)),
+            value.body?.includes(`<!-- hunkyard-finding:${key} -->`),
           ),
         )
       )

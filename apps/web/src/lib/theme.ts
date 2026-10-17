@@ -1,5 +1,4 @@
 import { useEffect, useSyncExternalStore } from 'react';
-import { readStored } from './hooks';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 
@@ -9,7 +8,7 @@ const listeners = new Set<() => void>();
 
 const read = (): ThemePreference => {
   try {
-    const value = readStored(key);
+    const value = localStorage.getItem(key);
     return value === 'light' || value === 'dark' ? value : 'system';
   } catch {
     return 'system';

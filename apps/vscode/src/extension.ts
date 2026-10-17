@@ -2,11 +2,6 @@ import { ReviewPlanSchema, type ReviewSession, SessionSchema } from '@hunkyard/d
 import * as vscode from 'vscode';
 import { assertExtensionAccess, frozenFindingSource, runCli, trustedExecutable } from './bridge';
 
-/** User-level value only; pre-rename `reviewlab.*` settings are read when the new key is unset. */
-const userSetting = (key: 'executable' | 'nodeExecutable') =>
-  vscode.workspace.getConfiguration('hunkyard').inspect<string>(key)?.globalValue ??
-  vscode.workspace.getConfiguration('reviewlab').inspect<string>(key)?.globalValue;
-
 export const activate = (context: vscode.ExtensionContext) => {
   const output = vscode.window.createOutputChannel('Hunkyard');
   const changed = new vscode.EventEmitter<void>();
@@ -25,8 +20,15 @@ export const activate = (context: vscode.ExtensionContext) => {
         folders.length === 1 ? folders[0] : await vscode.window.showWorkspaceFolderPick();
       if (!folder) return;
       assertExtensionAccess(vscode.workspace.isTrusted, folder.uri.scheme);
-      const executable = trustedExecutable(userSetting('executable'));
-      const node = trustedExecutable(userSetting('nodeExecutable'), 'node');
+      const configured = vscode.workspace
+        .getConfiguration('hunkyard')
+        .inspect<string>('executable');
+      const executable = trustedExecutable(configured?.globalValue);
+      const node = trustedExecutable(
+        vscode.workspace.getConfiguration('hunkyard').inspect<string>('nodeExecutable')
+          ?.globalValue,
+        'node',
+      );
       running = true;
       if (review) {
         const config = await runCli(

@@ -1,32 +1,14 @@
 import { createHash } from 'node:crypto';
 import { lstat, readdir, readFile, realpath } from 'node:fs/promises';
 import { dirname, join, relative } from 'node:path';
-import {
-  matchesPath,
-  ProjectConfigSchema,
-  type ReviewPolicyBundle,
-  STATE_DIRECTORIES,
-  STATE_DIRECTORY,
-} from '@hunkyard/domain';
+import { matchesPath, ProjectConfigSchema, type ReviewPolicyBundle } from '@hunkyard/domain';
 import { globalRules, readJson } from './config';
 
 const hash = (text: string) => createHash('sha256').update(text).digest('hex');
 const absent = (error: unknown) =>
   error instanceof Error && 'code' in error && error.code === 'ENOENT';
-/** First existing `<state folder>/<name>`, preferring `.hunkyard` over a pre-rename `.reviewlab`. */
-const stateFile = async (root: string, name: string) => {
-  for (const directory of STATE_DIRECTORIES) {
-    try {
-      await lstat(join(root, directory, name));
-      return `${directory}/${name}`;
-    } catch (error) {
-      if (!absent(error)) throw error;
-    }
-  }
-  return `${STATE_DIRECTORY}/${name}`;
-};
 export const projectSettings = async (root: string) => {
-  const location = join(root, await stateFile(root, 'config.json'));
+  const location = join(root, '.hunkyard/config.json');
   try {
     if (
       (await lstat(location)).isSymbolicLink() ||
@@ -164,12 +146,8 @@ export const resolvePolicy = async (
       format: 'copilot',
       patterns: ['**'],
     });
-  if (enabled.has('hunkyard') || enabled.has('reviewlab'))
-    candidates.push({
-      path: await stateFile(root, 'review.md'),
-      format: 'hunkyard',
-      patterns: ['**'],
-    });
+  if (enabled.has('hunkyard'))
+    candidates.push({ path: '.hunkyard/review.md', format: 'hunkyard', patterns: ['**'] });
   if (enabled.has('pr-agent'))
     candidates.push({ path: '.pr_agent.toml', format: 'pr-agent', patterns: ['**'] });
   if (enabled.has('cursor'))

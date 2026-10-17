@@ -4,7 +4,6 @@ import type { DatabaseSync } from 'node:sqlite';
 import { type ReviewSession, SessionSchema } from '@hunkyard/domain';
 import { validateSessionIntegrity, validateSnapshot } from './file-store';
 import { journal, runKey } from './sqlite-journal';
-import { stateDirectory } from './state-directory';
 
 const schemaVersion = 9;
 const schema = `
@@ -36,7 +35,7 @@ const durableSchema = `
 export const absent = (error: unknown) =>
   error instanceof Error && 'code' in error && error.code === 'ENOENT';
 const prepare = async (root: string) => {
-  const parent = await stateDirectory(root, 'sqlite');
+  const parent = join(root, '.hunkyard');
   const dir = join(parent, 'sqlite');
   for (const path of [parent, dir]) {
     await mkdir(path, { recursive: true, mode: 0o700 });

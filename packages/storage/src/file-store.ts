@@ -12,7 +12,6 @@ import {
   validateReviewProvenance,
   validateTarget,
 } from '@hunkyard/domain';
-import { stateDirectory } from './state-directory';
 
 export type SessionStore = {
   save(session: ReviewSession): Promise<void>;
@@ -209,18 +208,17 @@ export const validateSessionIntegrity = (session: ReviewSession): void => {
 };
 
 export const createFileSessionStore = (root: string): SessionStore => {
+  const parent = join(root, '.hunkyard');
+  const dir = join(parent, 'sessions-v2');
+  const snapshots = join(parent, 'snapshots-v2');
   const prepare = async () => {
-    const parent = await stateDirectory(root, 'sessions-v2');
-    const dir = join(parent, 'sessions-v2');
-    const snapshots = join(parent, 'snapshots-v2');
     await directory(parent);
     await directory(dir);
     await directory(snapshots);
-    return { dir, snapshots };
   };
   const get = async (id: string): Promise<ReviewSession | null> => {
     if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
-    const { dir, snapshots } = await prepare();
+    await prepare();
     let content: string;
     try {
       content = await read(join(dir, `${id}.json`));
@@ -250,7 +248,7 @@ export const createFileSessionStore = (root: string): SessionStore => {
     save: async (input) => {
       const session = SessionSchema.parse(input);
       validateSessionIntegrity(session);
-      const { dir, snapshots } = await prepare();
+      await prepare();
       const lock = join(dir, `${session.id}.lock`);
       try {
         await mkdir(lock);
@@ -284,7 +282,7 @@ export const createFileSessionStore = (root: string): SessionStore => {
       }
     },
     list: async () => {
-      const { dir, snapshots } = await prepare();
+      await prepare();
       const sessions = await Promise.all(
         (await readdir(dir))
           .filter((name) => /^[0-9a-f-]{36}\.json$/i.test(name))

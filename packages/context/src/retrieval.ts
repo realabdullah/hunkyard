@@ -5,7 +5,6 @@ import {
   changedLines,
   diffSections,
   excludedPath,
-  isStatePath,
   type ModelTarget,
   type ReviewPolicyBundle,
   type ReviewSnapshot,
@@ -92,7 +91,7 @@ export const collectContext = async (
       !excludedAliases.has(entry.path) &&
       entry.mode !== '120000' &&
       entry.mode !== '160000' &&
-      !isStatePath(entry.path) &&
+      !entry.path.startsWith('.hunkyard/') &&
       !/(^|\/)(node_modules|vendor|dist|build)\//.test(entry.path),
   );
   const byPath = new Map(available.map((entry) => [entry.path, entry]));

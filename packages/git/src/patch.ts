@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { constants } from 'node:fs';
 import { link, lstat, mkdir, open, readFile, realpath, rename, unlink } from 'node:fs/promises';
 import { dirname, join, resolve, sep } from 'node:path';
-import { type PatchProposal, type ReviewSession, STATE_DIRECTORIES } from '@hunkyard/domain';
+import { type PatchProposal, type ReviewSession } from '@hunkyard/domain';
 import { git } from './commands';
 
 const digest = (bytes: Uint8Array | string) => createHash('sha256').update(bytes).digest('hex');
@@ -13,7 +13,7 @@ const safeFile = async (root: string, file: string) => {
     !path.startsWith(`${root}${sep}`) ||
     file.includes('\\') ||
     file.includes(':') ||
-    file.split('/').some((part) => ['..', '.', '.git', '', ...STATE_DIRECTORIES].includes(part))
+    file.split('/').some((part) => ['..', '.', '.git', '.hunkyard', ''].includes(part))
   )
     throw new Error('Unsafe patch path.');
   let current = root;

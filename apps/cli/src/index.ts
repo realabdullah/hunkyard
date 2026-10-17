@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { lstat } from 'node:fs/promises';
-import { basename, join } from 'node:path';
+import { join } from 'node:path';
 import { probeModel, validateTarget } from '@hunkyard/agents';
 import {
   configPath,
@@ -22,13 +22,7 @@ import {
 } from '@hunkyard/domain';
 import { getRepoRoot } from '@hunkyard/git';
 import { createRuntime, startServer } from '@hunkyard/server/runtime';
-import {
-  backupHistory,
-  historyDatabasePath,
-  migrateFileHistory,
-  restoreHistory,
-  stateDirectory,
-} from '@hunkyard/storage';
+import { backupHistory, migrateFileHistory, restoreHistory } from '@hunkyard/storage';
 
 import {
   handlePowerUserFileCommand,
@@ -163,9 +157,7 @@ const main = async () => {
     }
   }
   if (await handlePowerUserFileCommand(command, value('--file'))) return;
-  const root = await getRepoRoot(
-    value('--repo') || process.env.HUNKYARD_REPO || process.env.REVIEWLAB_REPO || process.cwd(),
-  );
+  const root = await getRepoRoot(value('--repo') || process.env.HUNKYARD_REPO || process.cwd());
   const advanced = await powerUserRuntimeOptions(args, command);
   if (['backup', 'restore', 'policy-lint'].includes(command)) {
     const file = value('--file');
@@ -266,7 +258,7 @@ const main = async () => {
       JSON.stringify(
         {
           ...result,
-          destination: await historyDatabasePath(root),
+          destination: join(root, '.hunkyard', 'sqlite', 'history.db'),
           originalsPreserved: true,
         },
         null,
@@ -322,10 +314,9 @@ const main = async () => {
       const target = await loadTarget(root);
       const warnings: string[] = [];
       try {
-        const legacy = await stateDirectory(root, 'sessions');
-        await lstat(join(legacy, 'sessions'));
+        await lstat(join(root, '.hunkyard', 'sessions'));
         warnings.push(
-          `Legacy sessions remain in ${basename(legacy)}/sessions and are not verified or migrated.`,
+          'Legacy sessions remain in .hunkyard/sessions and are not verified or migrated.',
         );
       } catch {
         /* No legacy history. */

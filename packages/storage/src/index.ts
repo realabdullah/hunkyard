@@ -6,4 +6,3 @@ export {
 } from './file-store';
 export { backupHistory, restoreHistory } from './recovery';
 export { createSqliteSessionStore, type DurableStore, migrateFileHistory } from './sqlite';
-export { historyDatabasePath, stateDirectory } from './state-directory';
