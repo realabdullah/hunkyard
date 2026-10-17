@@ -1,0 +1,47 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: release
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tag matches release version
+        run: |
+          version=$(sed -n "s/^ *version: '\(.*\)',$/\1/p" scripts/package-release.ts)
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match scripts/package-release.ts version $version"
+            exit 1
+          fi
+      - uses: pnpm/action-setup@v4
+      # No dependency cache in release builds.
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          registry-url: https://registry.npmjs.org
+      # Trusted publishing needs npm 11.5.1+, staged publishing 11.15.0+.
+      - run: npm install --global npm@11.21.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm check:boundaries
+      - run: pnpm check:secrets
+      - run: pnpm test
+      - run: pnpm audit --audit-level=low
+      - run: pnpm package:release
+      - run: pnpm smoke:release
+      # Stage via OIDC (no token). It goes live only after a maintainer runs
+      # `npm stage approve` or approves it on npmjs.com with 2FA.
+      - run: npm stage publish --provenance --access public
+        working-directory: dist/release
