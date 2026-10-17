@@ -22,7 +22,7 @@ const manifest = JSON.parse(await readFile('apps/vscode/package.json', 'utf8')) 
 delete manifest.dependencies;
 delete manifest.devDependencies;
 await writeFile(`${root}/extension/package.json`, JSON.stringify(manifest, null, 2));
-await cp('docs/power-users/vscode.md', `${root}/extension/README.md`);
+await cp('apps/vscode/README.md', `${root}/extension/README.md`);
 await writeFile(
   `${root}/[Content_Types].xml`,
   '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="json" ContentType="application/json"/><Default Extension="cjs" ContentType="application/javascript"/><Default Extension="md" ContentType="text/markdown"/><Default Extension="vsixmanifest" ContentType="text/xml"/></Types>',

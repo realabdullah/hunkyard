@@ -38,8 +38,8 @@ try {
     execute(process.execPath, [cli, ...args, '--repo', fixture.root], { env, timeout: 30000 });
   assert.match((await run('--help')).stdout, /ReviewLab/);
   assert.match(
-    await readFile(join(installed, 'docs/troubleshooting.md'), 'utf8'),
-    /Troubleshooting/,
+    await readFile(join(installed, 'README.md'), 'utf8'),
+    /# ReviewLab/,
   );
   assert.equal(
     JSON.parse(

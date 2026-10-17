@@ -22,7 +22,6 @@ await chmod(`${directory}/cli.mjs`, 0o755);
 await cp('apps/web/dist', `${directory}/web`, { recursive: true });
 await cp('README.md', `${directory}/README.md`);
 await cp('CHANGELOG.md', `${directory}/CHANGELOG.md`);
-await cp('docs', `${directory}/docs`, { recursive: true });
 await cp('examples', `${directory}/examples`, { recursive: true });
 const require = createRequire(import.meta.url);
 const dependencies: Record<string, string> = {};
@@ -52,7 +51,7 @@ await writeFile(
       description: 'Local-first Git review workspace',
       type: 'module',
       bin: { reviewlab: 'cli.mjs' },
-      files: ['cli.mjs', 'web', 'docs', 'examples', 'CHANGELOG.md', 'bundled-dependencies.json'],
+      files: ['cli.mjs', 'web', 'examples', 'CHANGELOG.md', 'bundled-dependencies.json'],
       engines: { node: '>=22.22.0 <23' },
     },
     null,

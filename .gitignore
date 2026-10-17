@@ -12,3 +12,6 @@ test-results/
 .env.*
 !.env.example
 
+
+# Internal docs (PRD, progress, ADRs, guides) stay local
+docs/
