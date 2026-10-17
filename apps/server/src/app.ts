@@ -302,6 +302,37 @@ export const createApi = (deps: {
   app.post('/api/v1/sessions/:id/messages', async (c) =>
     c.json(await deps.service.interaction.message(c.req.param('id'), await c.req.json())),
   );
+  // Same contract as /messages, but answer text arrives as `delta` events while the model
+  // generates; `done` carries the saved interaction and `error` the problem title.
+  app.post('/api/v1/sessions/:id/messages/stream', async (c) => {
+    const id = c.req.param('id');
+    const body: unknown = await c.req.json();
+    c.header('X-Accel-Buffering', 'no');
+    return streamSSE(c, async (stream) => {
+      // A closed connection is the client's Stop: cancel the model call too.
+      const cancel = new AbortController();
+      stream.onAbort(() => cancel.abort());
+      let writes = Promise.resolve();
+      const send = (event: 'delta' | 'done' | 'error', data: unknown) => {
+        writes = writes
+          .then(() => stream.writeSSE({ event, data: JSON.stringify(data) }))
+          .catch(() => {});
+      };
+      try {
+        const state = await deps.service.interaction.message(
+          id,
+          body,
+          (text) => send('delta', { text }),
+          cancel.signal,
+        );
+        send('done', state);
+      } catch (error) {
+        const title = error instanceof Error ? error.message : 'Request failed';
+        send('error', { title, status: title.includes('revision conflict') ? 409 : 400 });
+      }
+      await writes;
+    });
+  });
   app.post('/api/v1/sessions/:id/messages/:messageId/reaction', async (c) =>
     c.json(
       await deps.service.interaction.react(
