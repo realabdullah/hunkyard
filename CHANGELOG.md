@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-17
+
+### Changed
+
+- Releases are now published from GitHub Actions with npm trusted publishing and provenance.
+
 ## [0.1.0] - 2026-10-17
 
 First public release, published to npm as `@hunkyard/cli`.
@@ -26,5 +32,6 @@ First public release, published to npm as `@hunkyard/cli`.
 - `hunkyard doctor`, `config`, `review`, `sessions` and other commands for working from the terminal.
 - VS Code extension that runs reviews and opens findings next to your code.
 
-[Unreleased]: https://github.com/realabdullah/hunkyard/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/realabdullah/hunkyard/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/realabdullah/hunkyard/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/realabdullah/hunkyard/releases/tag/v0.1.0

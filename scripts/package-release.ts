@@ -48,7 +48,7 @@ await writeFile(
   JSON.stringify(
     {
       name: '@hunkyard/cli',
-      version: '0.1.0',
+      version: '0.1.1',
       description: 'Local-first AI code review workspace for Git',
       keywords: ['code-review', 'git', 'ai', 'local-first', 'ollama', 'cli'],
       license: 'MIT',
