@@ -1,0 +1,18 @@
+{
+  "name": "@reviewlab/testing",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@reviewlab/domain": "workspace:*",
+    "@reviewlab/core": "workspace:*",
+    "@reviewlab/git": "workspace:*",
+    "@reviewlab/storage": "workspace:*",
+    "@reviewlab/context": "workspace:*",
+    "@reviewlab/agents": "workspace:*",
+    "@reviewlab/server": "workspace:*",
+    "@reviewlab/providers": "workspace:*",
+    "reviewlab-vscode": "workspace:*"
+  }
+}

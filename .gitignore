@@ -1,0 +1,14 @@
+node_modules
+dist
+.env
+.reviewlab/sessions
+.reviewlab/sessions-v2
+.reviewlab/snapshots-v2
+.reviewlab/sqlite
+
+# Generated verification artifacts and local credentials
+playwright-report/
+test-results/
+.env.*
+!.env.example
+

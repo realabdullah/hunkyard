@@ -1,0 +1,73 @@
+{
+  "name": "reviewlab-vscode",
+  "displayName": "ReviewLab",
+  "publisher": "reviewlab",
+  "description": "Explicit, local-first Git reviews with frozen finding sources.",
+  "version": "0.1.1",
+  "private": true,
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "main": "./dist/extension.cjs",
+  "extensionKind": [
+    "workspace"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false
+    },
+    "virtualWorkspaces": {
+      "supported": false
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "reviewlab.reviewStaged",
+        "title": "ReviewLab: Review Staged Changes"
+      },
+      {
+        "command": "reviewlab.history",
+        "title": "ReviewLab: Open Local Review History"
+      },
+      {
+        "command": "reviewlab.clear",
+        "title": "ReviewLab: Clear Findings View"
+      }
+    ],
+    "configuration": {
+      "title": "ReviewLab",
+      "properties": {
+        "reviewlab.executable": {
+          "type": "string",
+          "default": "reviewlab",
+          "scope": "machine",
+          "description": "Trusted installed ReviewLab CLI executable. Only user settings are read; repository settings are ignored."
+        },
+        "reviewlab.nodeExecutable": {
+          "type": "string",
+          "default": "node",
+          "scope": "machine",
+          "description": "Node 22.22.x executable for an absolute cli.mjs path, required on Windows. Only user settings are read."
+        }
+      }
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "reviewlab.findings",
+          "name": "ReviewLab Findings"
+        }
+      ]
+    }
+  },
+  "devDependencies": {
+    "@types/vscode": "1.95.0"
+  },
+  "dependencies": {
+    "@reviewlab/domain": "workspace:*"
+  },
+  "exports": {
+    "./bridge": "./src/bridge.ts"
+  }
+}

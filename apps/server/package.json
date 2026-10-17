@@ -1,0 +1,21 @@
+{
+  "name": "@reviewlab/server",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@reviewlab/domain": "workspace:*",
+    "@reviewlab/git": "workspace:*",
+    "@reviewlab/core": "workspace:*",
+    "@reviewlab/agents": "workspace:*",
+    "@reviewlab/storage": "workspace:*",
+    "hono": "^4.0.0",
+    "@hono/node-server": "^1.0.0",
+    "@reviewlab/context": "workspace:*",
+    "@reviewlab/providers": "workspace:*"
+  },
+  "exports": {
+    "./runtime": "./src/runtime.ts",
+    "./app": "./src/app.ts",
+    "./context": "./src/context.ts"
+  }
+}

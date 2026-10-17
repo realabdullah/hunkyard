@@ -1,0 +1,14 @@
+{
+  "name": "@reviewlab/cli",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@reviewlab/git": "workspace:*",
+    "@reviewlab/server": "workspace:*",
+    "@reviewlab/context": "workspace:*",
+    "@reviewlab/agents": "workspace:*",
+    "@reviewlab/storage": "workspace:*",
+    "@reviewlab/domain": "workspace:*",
+    "@reviewlab/core": "workspace:*"
+  }
+}

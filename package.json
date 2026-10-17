@@ -1,0 +1,53 @@
+{
+  "name": "reviewlab-starter",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "dev": "concurrently -k \"pnpm dev:server\" \"pnpm dev:web\"",
+    "dev:server": "tsx watch apps/cli/src/index.ts open --no-browser",
+    "dev:web": "pnpm --filter @reviewlab/web dev",
+    "review": "tsx apps/cli/src/index.ts review --staged",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "test": "vitest run",
+    "benchmark": "tsx scripts/benchmark-review.ts",
+    "test:e2e": "playwright test",
+    "check:boundaries": "tsx scripts/check-boundaries.ts",
+    "check:secrets": "tsx scripts/check-secrets.ts",
+    "check:commit": "tsx scripts/check-commit.ts",
+    "build": "pnpm --filter @reviewlab/web build",
+    "check": "pnpm lint && pnpm typecheck && pnpm check:boundaries && pnpm check:secrets && pnpm test && pnpm build && pnpm test:e2e",
+    "reviewlab": "tsx apps/cli/src/index.ts",
+    "open": "tsx apps/cli/src/index.ts open",
+    "package:release": "pnpm build && tsx scripts/package-release.ts",
+    "smoke:release": "tsx scripts/smoke-release.ts",
+    "package:vscode": "tsx scripts/package-vscode.ts",
+    "smoke:vscode": "tsx scripts/smoke-vscode.ts",
+    "smoke:vscode-host": "tsx scripts/smoke-vscode-host.ts"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@biomejs/biome": "2.5.15",
+    "@playwright/test": "1.64.1",
+    "@types/node": "^22.0.0",
+    "concurrently": "^9.0.0",
+    "esbuild": "0.28.2",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0",
+    "vitest": "5.0.4"
+  },
+  "engines": {
+    "node": ">=22.22.0 <23",
+    "pnpm": "10.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ],
+    "overrides": {
+      "dompurify": "3.4.17"
+    }
+  }
+}

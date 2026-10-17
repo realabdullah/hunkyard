@@ -1,0 +1,12 @@
+{
+  "name": "@reviewlab/core",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./ports": "./src/ports.ts"
+  },
+  "dependencies": {
+    "@reviewlab/domain": "workspace:*"
+  }
+}

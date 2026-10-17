@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "name": "Team cancellation review",
+  "rules": ["Check that asynchronous work stops when its owner is disposed."],
+  "exclude": ["private/**"],
+  "review": { "profile": "standard", "concurrency": 2, "tokenBudget": 120000 }
+}

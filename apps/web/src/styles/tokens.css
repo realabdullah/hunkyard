@@ -1,0 +1,117 @@
+/* Calm, paper-like workspace tokens: warm greys, soft card colours, one quiet accent. */
+:root {
+  color-scheme: light;
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --bg: #f7f7f5;
+  --sidebar: #f1f1ef;
+  --canvas: #efefed;
+  --canvas-dot: #d6d6d2;
+  --surface: #ffffff;
+  --surface-2: #fafaf9;
+  --surface-sunk: #f3f3f1;
+  --hover: rgba(15, 15, 15, 0.045);
+  --active: rgba(15, 15, 15, 0.08);
+  --line: #e6e6e3;
+  --line-strong: #d5d5d1;
+  --text: #232322;
+  --text-2: #55544f;
+  --text-3: #6e6d68;
+  --accent: #3b6fe0;
+  --accent-soft: #e7eefc;
+  --accent-text: #2a57bd;
+  --on-accent: #ffffff;
+  --focus: #3b6fe0;
+
+  /* Heptabase-style card colours: tint (background), ink (text/accents), edge */
+  --red-tint: #fdeceb;
+  --red-ink: #c4372d;
+  --red-edge: #f3c8c4;
+  --orange-tint: #fdf0e4;
+  --orange-ink: #9e4d0b;
+  --orange-edge: #f2d2b3;
+  --yellow-tint: #fcf5dc;
+  --yellow-ink: #7a5c00;
+  --yellow-edge: #eedd9f;
+  --green-tint: #e8f5ec;
+  --green-ink: #2d7a46;
+  --green-edge: #bfe0ca;
+  --blue-tint: #e8f0fd;
+  --blue-ink: #2a5ec4;
+  --blue-edge: #c4d6f6;
+  --purple-tint: #f2ecfc;
+  --purple-ink: #6c45bf;
+  --purple-edge: #d9caf3;
+  --gray-tint: #f1f1ef;
+  --gray-ink: #6b6a66;
+  --gray-edge: #dddcd8;
+
+  --add-bg: #e9f6ee;
+  --add-ink: #1f6b3a;
+  --del-bg: #fcebea;
+  --del-ink: #a8322a;
+
+  --shadow-1: 0 1px 2px rgba(20, 20, 18, 0.05);
+  --shadow-2: 0 1px 2px rgba(20, 20, 18, 0.04), 0 4px 14px rgba(20, 20, 18, 0.07);
+  --shadow-3: 0 2px 6px rgba(20, 20, 18, 0.06), 0 16px 40px rgba(20, 20, 18, 0.14);
+
+  --r-sm: 6px;
+  --r: 8px;
+  --r-lg: 12px;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #1d1d1c;
+    --sidebar: #191918;
+    --canvas: #181817;
+    --canvas-dot: #33332f;
+    --surface: #262624;
+    --surface-2: #2b2b29;
+    --surface-sunk: #20201f;
+    --hover: rgba(255, 255, 255, 0.05);
+    --active: rgba(255, 255, 255, 0.09);
+    --line: #353532;
+    --line-strong: #44443f;
+    --text: #ecebe8;
+    --text-2: #b5b4ae;
+    --text-3: #93928c;
+    --accent: #6b97f2;
+    --accent-soft: #24304a;
+    --accent-text: #9ab8f7;
+    --on-accent: #0f1420;
+    --focus: #7ba3f5;
+    --red-tint: #3a2321;
+    --red-ink: #f19a91;
+    --red-edge: #5a302c;
+    --orange-tint: #38281a;
+    --orange-ink: #f0b07a;
+    --orange-edge: #573c24;
+    --yellow-tint: #353019;
+    --yellow-ink: #e6cf73;
+    --yellow-edge: #524921;
+    --green-tint: #1f3326;
+    --green-ink: #85cf9e;
+    --green-edge: #2d4d38;
+    --blue-tint: #1f2b40;
+    --blue-ink: #93b4f4;
+    --blue-edge: #2e4266;
+    --purple-tint: #2c2440;
+    --purple-ink: #bea4f2;
+    --purple-edge: #443866;
+    --gray-tint: #2c2c2a;
+    --gray-ink: #b3b2ad;
+    --gray-edge: #40403c;
+    --add-bg: #1c3324;
+    --add-ink: #8fd5a5;
+    --del-bg: #3b2120;
+    --del-ink: #f2a39b;
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-2: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 18px rgba(0, 0, 0, 0.3);
+    --shadow-3: 0 4px 10px rgba(0, 0, 0, 0.35), 0 20px 48px rgba(0, 0, 0, 0.45);
+  }
+}

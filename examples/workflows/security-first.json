@@ -1,0 +1,11 @@
+{
+  "verify": true,
+  "workflow": {
+    "version": 1,
+    "nodes": [
+      { "agent": "security", "after": [] },
+      { "agent": "correctness", "after": ["security"] },
+      { "agent": "verifier", "after": ["security", "correctness"] }
+    ]
+  }
+}
