@@ -79,6 +79,12 @@ export const createReviewService = (deps: ReviewServiceDependencies) => {
             ...plan.agents.map((route) => route.target.contextWindow ?? 128000),
           ),
           maxTokens: Math.max(...plan.agents.map((route) => route.target.maxTokens)),
+          // Every reviewer sends the same context, so each first request must fit its share of
+          // the shared run budget; larger contexts are trimmed here with recorded omissions.
+          maxReviewTokens: Math.min(
+            target.maxReviewTokens ?? 400000,
+            Math.floor(plan.maxTokens / plan.agents.length),
+          ),
         }
       : target;
     const initialPolicy = await resolvePolicy(root);
