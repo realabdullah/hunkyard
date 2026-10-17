@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ReviewLab — local-first AI code review for Git</title>
+    <meta
+      name="description"
+      content="ReviewLab freezes a snapshot of your Git changes, runs specialist reviewers on the model you choose, and lays every finding out with its evidence. Local by default."
+    />
+    <link rel="icon" href="/mark.svg" type="image/svg+xml" />
+    <script>
+      try {
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.dataset.theme = 'dark';
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <a class="skip" href="#c-hero">Skip to content</a>
+
+    <header class="topbar">
+      <a class="pill brand" href="#c-hero" data-go="hero" aria-label="ReviewLab, back to start">
+        <svg class="mark" width="20" height="20" viewBox="0 0 26 26" aria-hidden="true">
+          <rect width="26" height="26" rx="7" />
+          <g fill="none" stroke-linecap="round">
+            <circle cx="11.6" cy="11.6" r="6" stroke-width="2" />
+            <path d="M8.9 10.2h3.6M10.4 13h4" stroke-width="1.7" />
+            <path d="m16.2 16.2 3.6 3.6" stroke-width="2.2" />
+          </g>
+        </svg>
+        ReviewLab
+      </a>
+      <div class="pill pill-tight">
+        <button class="icon-btn" type="button" id="theme" aria-label="Switch to dark theme">
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path class="moon" d="M13.5 9.6A5.6 5.6 0 0 1 6.4 2.5a5.6 5.6 0 1 0 7.1 7.1Z" /><g class="sun"><circle cx="8" cy="8" r="2.8" /><path d="M8 1.2v1.6M8 13.2v1.6M1.2 8h1.6M13.2 8h1.6M3.2 3.2l1.1 1.1M11.7 11.7l1.1 1.1M3.2 12.8l1.1-1.1M11.7 4.3l1.1-1.1" /></g></svg>
+        </button>
+        <a class="btn btn-ink btn-sm" href="#c-install" data-go="install">Get started</a>
+      </div>
+    </header>
+
+    <main class="viewport" id="viewport" aria-label="ReviewLab, laid out on a canvas">
+      <div class="world" id="world">
+        <svg class="links" id="links" aria-hidden="true"></svg>
+
+        <!-- Hero -->
+        <section class="cluster hero" id="c-hero" data-stop="hero" style="left: 0; top: 0">
+          <p class="kicker mono">Local-first code review · 0.1 release candidate</p>
+          <h1 class="serif">Review the diff on a canvas <em>you own.</em></h1>
+          <p class="lede">
+            ReviewLab freezes your Git changes, sends a crew of reviewers over them on the model
+            you choose, and lays every finding out with its evidence. Your code leaves localhost
+            only when you say so.
+          </p>
+          <div class="actions">
+            <a class="btn btn-ink" href="#c-install" data-go="install">Get started</a>
+            <button class="btn btn-line" type="button" data-next>Take the tour <span aria-hidden="true">→</span></button>
+          </div>
+          <p class="hint">Drag or scroll to look around. Press <kbd>→</kbd> for the next stop.</p>
+        </section>
+
+        <!-- Review demo -->
+        <section class="cluster review" id="c-review" data-stop="review" style="left: 860px; top: -64px" aria-labelledby="t-review">
+          <header class="annot">
+            <span class="num mono">01</span>
+            <div>
+              <h2 class="serif" id="t-review">A review, <em>laid out.</em></h2>
+              <p>Snapshot, crew, findings and fix, connected the way they are in the workspace. Try the underlined words and the cards.</p>
+            </div>
+          </header>
+
+          <div class="review-grid" id="stage">
+            <div class="node launcher" data-node="launcher">
+              <p class="sentence" aria-live="polite">
+                Review
+                <button class="token" type="button" data-token="scope" aria-label="Change what to review">staged changes</button>
+                with the
+                <button class="token" type="button" data-token="crew" aria-label="Change the reviewer crew">standard crew</button>
+                on
+                <button class="token" type="button" data-token="model" aria-label="Change the model">qwen2.5-coder:7b</button>
+              </p>
+              <div class="route">
+                <span class="route-label">Code goes to</span>
+                <span class="route-dest mono" id="route-dest"></span>
+                <span class="badge" id="route-badge"></span>
+                <button class="btn btn-ink btn-sm run" type="button" id="run"></button>
+              </div>
+            </div>
+
+            <article class="node snapshot" data-node="snapshot">
+              <header class="node-head"><span>Frozen snapshot</span><span class="mono">7f3a91c</span></header>
+              <p class="node-title" id="snap-title"></p>
+              <p class="node-sub" id="snap-meta"></p>
+              <p class="diffstat mono"><span class="add" id="snap-add"></span><span class="del" id="snap-del"></span></p>
+            </article>
+
+            <article class="node crew" data-node="crew">
+              <header class="node-head"><span>Crew</span><span class="mono" id="crew-model"></span></header>
+              <ul class="crew-list" id="crew-list"></ul>
+            </article>
+
+            <div class="findings" id="findings" role="listbox" aria-label="Findings"></div>
+
+            <article class="node evidence" data-node="evidence" aria-live="polite">
+              <header class="node-head"><span>Evidence</span><span class="mono" id="ev-loc"></span></header>
+              <pre class="code mono" id="ev-code"></pre>
+              <dl class="prov" id="ev-prov"></dl>
+              <div class="patch">
+                <div class="node-head"><span>Suggested fix</span><span class="badge badge-gray" id="patch-state"></span></div>
+                <pre class="code diff mono" id="ev-patch"></pre>
+                <div class="patch-actions">
+                  <button class="btn btn-line btn-sm" type="button" id="patch-preview">Preview side effects</button>
+                  <button class="btn btn-ink btn-sm" type="button" id="patch-approve">Approve and apply</button>
+                </div>
+              </div>
+            </article>
+          </div>
+          <p class="caption">An illustrative review. The real workspace runs against your repository.</p>
+        </section>
+
+        <!-- Privacy -->
+        <section class="cluster privacy" id="c-privacy" data-stop="privacy" style="left: 0; top: 860px" aria-labelledby="t-privacy">
+          <header class="annot">
+            <span class="num mono">02</span>
+            <div>
+              <h2 class="serif" id="t-privacy">Where your code goes is <em>never a guess.</em></h2>
+              <p>Before a review starts, ReviewLab names every destination your source code will reach. Local-only mode is a hard boundary, not a preference.</p>
+            </div>
+          </header>
+          <div class="privacy-grid">
+            <ul class="points">
+              <li><strong>Local by default.</strong> Ollama, LM Studio, llama.cpp or any OpenAI-compatible server on your machine.</li>
+              <li><strong>Consent per repository.</strong> Hosted providers need an explicit opt-in for each repository, and you can revoke it at any time.</li>
+              <li><strong>No silent fallback.</strong> If your local model fails, the review stops. It never quietly switches to the cloud.</li>
+            </ul>
+            <div class="node ledger" role="table" aria-label="Example destinations in local-only mode">
+              <div class="ledger-row ledger-head" role="row"><span role="columnheader">Destination</span><span role="columnheader">Local-only mode</span></div>
+              <div class="ledger-row" role="row"><span class="mono" role="cell">127.0.0.1:11434 <em>Ollama</em></span><span role="cell"><span class="badge badge-green">Allowed</span></span></div>
+              <div class="ledger-row" role="row"><span class="mono" role="cell">localhost:1234 <em>LM Studio</em></span><span role="cell"><span class="badge badge-green">Allowed</span></span></div>
+              <div class="ledger-row" role="row"><span class="mono" role="cell">api.openai.com <em>OpenAI</em></span><span role="cell"><span class="badge badge-red">Blocked</span></span></div>
+              <div class="ledger-row" role="row"><span class="mono" role="cell">api.github.com <em>Pull requests</em></span><span role="cell"><span class="badge badge-red">Blocked</span></span></div>
+              <p class="ledger-foot mono">reviewlab config --privacy cloud-allowed --allow-cloud</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Rules -->
+        <section class="cluster rules" id="c-rules" data-stop="rules" style="left: 1320px; top: 860px" aria-labelledby="t-rules">
+          <header class="annot">
+            <span class="num mono">03</span>
+            <div>
+              <h2 class="serif" id="t-rules">It reads the rules <em>you already wrote.</em></h2>
+              <p>A nested file applies only to its own directory. When a finding relies on one of your rules, it says which one.</p>
+            </div>
+          </header>
+          <div class="node tree" aria-label="Instruction files ReviewLab reads">
+            <p class="tree-root mono">your-repo/</p>
+            <ul class="mono">
+              <li><span>AGENTS.md</span><span class="note">whole repository</span></li>
+              <li><span>CLAUDE.md</span><span class="note">whole repository</span></li>
+              <li class="nest"><span>packages/billing/AGENTS.md</span><span class="note">only billing/</span></li>
+              <li><span>.github/copilot-instructions.md</span><span class="note">Copilot</span></li>
+              <li><span>.cursor/rules/</span><span class="note">Cursor, by glob</span></li>
+              <li><span>.pr_agent.toml</span><span class="note">Qodo</span></li>
+              <li><span>.reviewlab/review.md</span><span class="note">ReviewLab</span></li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Models -->
+        <section class="cluster models" id="c-models" data-stop="models" style="left: 0; top: 1560px" aria-labelledby="t-models">
+          <header class="annot">
+            <span class="num mono">04</span>
+            <div>
+              <h2 class="serif" id="t-models">Bring the model. <em>Keep the choice.</em></h2>
+              <p>Run reviewers on your own hardware, or opt in to a hosted provider for one repository at a time.</p>
+            </div>
+          </header>
+          <div class="models-grid">
+            <div class="node group">
+              <h3>On your machine</h3>
+              <ul><li>Ollama</li><li>LM Studio</li><li>llama.cpp</li><li>Any OpenAI-compatible server</li></ul>
+            </div>
+            <div class="node group">
+              <h3>Hosted, with consent</h3>
+              <ul><li>OpenAI</li><li>DeepSeek</li><li>AgentRouter</li></ul>
+            </div>
+            <div class="node group">
+              <h3>Reviewers</h3>
+              <ul><li>Correctness</li><li>Security</li><li>Frontend and accessibility</li><li>Architecture and performance</li><li>Testing</li></ul>
+            </div>
+          </div>
+          <div class="extras">
+            <div><h3>GitHub pull requests</h3><p>Review a PR locally with the GitHub CLI. Posting a summary back is a separate, confirmed step.</p></div>
+            <div><h3>VS Code</h3><p>Run reviews and browse their findings without leaving the editor.</p></div>
+            <div><h3>History that stays</h3><p>Sessions, runs and decisions live in a local SQLite database. Export or delete them whenever you like.</p></div>
+          </div>
+        </section>
+
+        <!-- Install -->
+        <section class="cluster install" id="c-install" data-stop="install" style="left: 1320px; top: 1560px" aria-labelledby="t-install">
+          <header class="annot">
+            <span class="num mono">05</span>
+            <div>
+              <h2 class="serif" id="t-install">Your first review, <em>in three steps.</em></h2>
+              <p>You need Node.js 22.22, Git and a model. ReviewLab never stages, commits or pushes.</p>
+            </div>
+          </header>
+          <ol class="node steps">
+            <li>
+              <p>Build the CLI from the repository, then install the packed tarball globally (see the README).</p>
+              <div class="cmd"><pre class="mono">pnpm install --frozen-lockfile &amp;&amp; pnpm package:release</pre><button class="copy" type="button" data-copy="pnpm install --frozen-lockfile &amp;&amp; pnpm package:release">Copy</button></div>
+            </li>
+            <li>
+              <p>Point it at a local model.</p>
+              <div class="cmd"><pre class="mono">reviewlab config --provider ollama --endpoint http://127.0.0.1:11434 --model qwen2.5-coder:7b --privacy local-only</pre><button class="copy" type="button" data-copy="reviewlab config --provider ollama --endpoint http://127.0.0.1:11434 --model qwen2.5-coder:7b --privacy local-only">Copy</button></div>
+            </li>
+            <li>
+              <p>Open the workspace from any Git project.</p>
+              <div class="cmd"><pre class="mono">reviewlab</pre><button class="copy" type="button" data-copy="reviewlab">Copy</button></div>
+            </li>
+          </ol>
+          <p class="signoff"><span class="serif">ReviewLab</span> · Local-first AI code review for Git.</p>
+        </section>
+      </div>
+    </main>
+
+    <nav class="dock" id="dock" aria-label="Canvas stops">
+      <button type="button" data-go="overview">Overview</button>
+      <button type="button" data-go="hero">Intro</button>
+      <button type="button" data-go="review">Review</button>
+      <button type="button" data-go="privacy">Privacy</button>
+      <button type="button" data-go="rules">Rules</button>
+      <button type="button" data-go="models">Models</button>
+      <button type="button" data-go="install">Install</button>
+    </nav>
+
+    <div class="map" id="map" aria-hidden="true">
+      <div class="map-stage" id="map-stage"><div class="map-view" id="map-view"></div></div>
+      <div class="zoom">
+        <button type="button" data-zoom="-1" tabindex="-1">−</button>
+        <span class="mono" id="zoom-level">100%</span>
+        <button type="button" data-zoom="1" tabindex="-1">+</button>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
