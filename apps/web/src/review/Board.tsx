@@ -1,5 +1,11 @@
 import type { Finding } from '@reviewlab/domain';
-import { type PointerEvent as ReactPointerEvent, useMemo, useRef, useState } from 'react';
+import {
+  type PointerEvent as ReactPointerEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { diffStats } from '../diff-lines';
 import { useStoredState } from '../lib/hooks';
 import {
@@ -20,7 +26,16 @@ import { Avatar, Menu, MenuItem, Pill } from '../ui/primitives';
 import { Canvas, type CanvasHandle } from './Canvas';
 import { Celebrate, useJustCleared } from './Celebrate';
 import { decide, useReview } from './context';
-import { boundsOf, type CardBox, layoutBoard } from './layout';
+import {
+  boundsOf,
+  type CardBox,
+  layoutBoard,
+  mapInset,
+  type Stats,
+  tileRect,
+  worstSeverity,
+} from './layout';
+import type { Tile } from './treemap';
 
 type Offsets = Record<string, { dx: number; dy: number }>;
 
@@ -30,7 +45,8 @@ export const Board = () => {
   const canvas = useRef<CanvasHandle>(null);
   const [offsets, setOffsets] = useStoredState<Offsets>(`reviewlab.board.${session.id}`, {});
   const [hover, setHover] = useState<string | null>(null);
-  const layout = useMemo(() => layoutBoard(session), [session]);
+  const stats = useMemo(() => diffStats(session.snapshot), [session.snapshot]);
+  const layout = useMemo(() => layoutBoard(session, stats), [session, stats]);
   const cards = useMemo(
     () =>
       layout.cards.map((card) => {
@@ -45,24 +61,28 @@ export const Board = () => {
     () => new Map(session.findings.map((finding) => [finding.id, finding])),
     [session.findings],
   );
-  const stats = useMemo(() => diffStats(session.snapshot), [session.snapshot]);
   const selectedId =
     selection?.kind === 'finding'
       ? `finding:${selection.id}`
       : selection?.kind === 'file'
-        ? `file:${selection.path}`
+        ? 'files'
         : selection?.kind === 'agent'
           ? `agent:${selection.id}`
           : selection?.kind === 'evidence'
             ? 'snapshot'
             : (selection?.kind ?? null);
   const focusFinding = findingById.get((hover ?? selectedId ?? '').replace('finding:', ''));
+  const hotFile = hover?.startsWith('file:')
+    ? hover.slice(5)
+    : selection?.kind === 'file'
+      ? selection.path
+      : (focusFinding?.file ?? null);
   const live = isLive(session.status);
   const settled = session.findings.filter((finding) => statusMeta[status(finding)].settled).length;
   const cleared = useJustCleared(interaction ? settled : null, session.findings.length);
 
   const drag = (card: CardBox, event: ReactPointerEvent) => {
-    if ((event.target as HTMLElement).closest('.card-actions, .menu')) return;
+    if ((event.target as HTMLElement).closest('.card-actions, .menu, .tile')) return;
     if (event.button !== 0) return;
     const start = { x: event.clientX, y: event.clientY };
     const base = offsets[card.id] ?? { dx: 0, dy: 0 };
@@ -96,19 +116,41 @@ export const Board = () => {
       const members = section.cards
         .map((id) => byId.get(id))
         .filter((card): card is CardBox => Boolean(card));
-      return members.length ? { section, box: boundsOf(members, 22) } : null;
+      return members.length ? { section, box: boundsOf(members, 18) } : null;
     })
     .filter((entry) => entry !== null);
 
-  const edge = (from: CardBox, to: CardBox) => {
-    const x1 = from.x + from.w;
-    const y1 = from.y + Math.min(from.h / 2, 40);
-    const x2 = to.x;
-    const y2 = to.y + Math.min(to.h / 2, 40);
+  const selectedBox = selectedId ? byId.get(selectedId) : undefined;
+  const selectedKey = selectedBox
+    ? `${selectedBox.id}:${Math.round(selectedBox.x)}:${Math.round(selectedBox.y)}`
+    : null;
+  useEffect(() => {
+    if (!selectedBox) return;
+    const wide = document.querySelector('.side-panel.is-wide');
+    const timer = setTimeout(() => canvas.current?.reveal(selectedBox, wide ? 800 : 490), 30);
+    return () => clearTimeout(timer);
+  }, [selectedKey]);
+
+  const curve = (x1: number, y1: number, x2: number, y2: number) => {
     const bend = Math.max(40, Math.abs(x2 - x1) / 2);
     return `M ${x1} ${y1} C ${x1 + bend} ${y1}, ${x2 - bend} ${y2}, ${x2} ${y2}`;
   };
+  const edge = (from: CardBox, to: CardBox) =>
+    curve(from.x + from.w, from.y + Math.min(from.h / 2, 40), to.x, to.y + Math.min(to.h / 2, 40));
   const snapshotCard = byId.get('snapshot');
+  const map = byId.get('files');
+  const tileByPath = new Map(layout.tiles.map((tile) => [tile.item, tile]));
+  const portY = (path: string) => {
+    const tile = tileByPath.get(path);
+    if (!map || !tile) return null;
+    const rect = tileRect(map, tile);
+    return Math.min(map.y + map.h - 14, Math.max(map.y + mapInset.top + 6, rect.y + rect.h / 2));
+  };
+  const ports = new Map<string, number>();
+  for (const finding of session.findings) {
+    const y = portY(finding.file);
+    if (y !== null) ports.set(finding.file, y);
+  }
   return (
     <div className="board">
       <Canvas
@@ -133,10 +175,13 @@ export const Board = () => {
         {sectionBoxes.map(({ section, box }) => (
           <div
             key={section.id}
-            className={`section tint-${section.tint}`}
+            className={`section section-${section.id}`}
             style={{ left: box.x, top: box.y - 30, width: box.w, height: box.h + 30 }}
           >
-            <span className="section-title">{section.title}</span>
+            <span className="section-title">
+              {section.title}
+              {section.count !== undefined && <b>{section.count}</b>}
+            </span>
           </div>
         ))}
         <svg className="edges" aria-hidden="true">
@@ -150,21 +195,43 @@ export const Board = () => {
                   className={`edge edge-crew ${live ? 'is-live' : ''}`}
                 />
               ))}
-          {cards
-            .filter((card) => card.kind === 'finding' && card.ref)
-            .map((card) => {
-              const finding = findingById.get(card.ref ?? '');
-              const file = finding && byId.get(`file:${finding.file}`);
-              if (!finding || !file) return null;
-              const done = statusMeta[status(finding)].settled;
-              return (
+          {map &&
+            cards
+              .filter((card) => card.kind === 'agent')
+              .map((card) => (
                 <path
-                  key={`e:${card.id}`}
-                  d={edge(file, card)}
-                  className={`edge edge-finding ink-${severityMeta[finding.severity].tint} ${done ? 'is-done' : ''} ${focusFinding?.id === finding.id ? 'is-hot' : ''}`}
+                  key={`m:${card.id}`}
+                  d={edge(card, map)}
+                  className={`edge edge-read ${live ? 'is-live' : ''}`}
                 />
-              );
-            })}
+              ))}
+          {map &&
+            cards
+              .filter((card) => card.kind === 'finding' && card.ref)
+              .map((card) => {
+                const finding = findingById.get(card.ref ?? '');
+                const y = finding ? ports.get(finding.file) : undefined;
+                if (!finding || y === undefined) return null;
+                const done = statusMeta[status(finding)].settled;
+                const hot = focusFinding?.id === finding.id || hotFile === finding.file;
+                return (
+                  <path
+                    key={`e:${card.id}`}
+                    d={curve(map.x + map.w, y, card.x, card.y + Math.min(card.h / 2, 40))}
+                    className={`edge edge-finding ink-${severityMeta[finding.severity].tint} ${done ? 'is-done' : ''} ${hot ? 'is-hot' : ''}`}
+                  />
+                );
+              })}
+          {map &&
+            [...ports].map(([path, y]) => (
+              <circle
+                key={`p:${path}`}
+                cx={map.x + map.w}
+                cy={y}
+                r={hotFile === path ? 5 : 3.5}
+                className={`port ${hotFile === path ? 'is-hot' : ''}`}
+              />
+            ))}
           {focusFinding?.attributions?.map((attribution) => {
             const agent = byId.get(`agent:${attribution.agent}`);
             const card = byId.get(`finding:${focusFinding.id}`);
@@ -178,21 +245,28 @@ export const Board = () => {
             );
           })}
         </svg>
-        {cards.map((card) => (
+        {cards.map((card, index) => (
           <div
             key={card.id}
             data-card
-            className={`card card-${card.kind} ${selectedId === card.id ? 'is-selected' : ''}`}
-            style={{ left: card.x, top: card.y, width: card.w, minHeight: card.h }}
+            className={`card card-${card.kind} ${selectedId === card.id ? 'is-selected' : ''} ${card.ref && card.ref === focusFinding?.id ? 'is-hot' : ''}`}
+            style={{
+              left: card.x,
+              top: card.y,
+              width: card.w,
+              minHeight: card.h,
+              ...(card.kind === 'files' ? { height: card.h } : {}),
+              animationDelay: `${Math.min(index, 14) * 35}ms`,
+            }}
             onPointerDown={(event) => drag(card, event)}
             onPointerEnter={() => card.kind === 'finding' && setHover(card.id)}
             onPointerLeave={() => card.kind === 'finding' && setHover(null)}
           >
-            <CardBody
-              card={card}
-              finding={card.ref ? findingById.get(card.ref) : undefined}
-              stats={stats}
-            />
+            {card.kind === 'files' ? (
+              <ChangeMap tiles={layout.tiles} stats={stats} hotFile={hotFile} setHover={setHover} />
+            ) : (
+              <CardBody card={card} finding={card.ref ? findingById.get(card.ref) : undefined} />
+            )}
           </div>
         ))}
       </Canvas>
@@ -200,15 +274,98 @@ export const Board = () => {
   );
 };
 
-const CardBody = ({
-  card,
-  finding,
+/** Half the gap between neighbouring tiles; tiles never touch each other or the map edge. */
+const gutter = 2;
+
+/** Every changed file as one tile, sized by churn and tinted by its worst open finding. */
+const ChangeMap = ({
+  tiles,
   stats,
+  hotFile,
+  setHover,
 }: {
-  card: CardBox;
-  finding: Finding | undefined;
-  stats: Map<string, { added: number; removed: number }>;
+  tiles: Tile<string>[];
+  stats: Stats;
+  hotFile: string | null;
+  setHover: (id: string | null) => void;
 }) => {
+  const { session, select, status, selection } = useReview();
+  const totals = [...stats.values()].reduce(
+    (sum, stat) => ({ added: sum.added + stat.added, removed: sum.removed + stat.removed }),
+    { added: 0, removed: 0 },
+  );
+  return (
+    <div className="change-map">
+      <header className="map-head">
+        <span className="card-kicker">
+          <Icon name="layers" size={13} /> {session.snapshot.files.length} files
+        </span>
+        <span className="map-churn">
+          <span className="add">+{totals.added}</span>
+          <span className="del">−{totals.removed}</span>
+        </span>
+      </header>
+      <div
+        className="map-field"
+        style={{
+          top: mapInset.top,
+          left: mapInset.side,
+          right: mapInset.side,
+          bottom: mapInset.bottom,
+        }}
+      >
+        {tiles.map((tile) => {
+          const path = tile.item;
+          const change = session.snapshot.changes.find(
+            (entry) => entry.newPath === path || entry.oldPath === path,
+          );
+          const stat = stats.get(path) ?? { added: 0, removed: 0 };
+          const fileFindings = session.findings.filter((entry) => entry.file === path);
+          const open = fileFindings.filter((entry) => !statusMeta[status(entry)].settled);
+          const worst = worstSeverity(open);
+          const total = Math.max(1, stat.added + stat.removed);
+          const roomy = tile.w > 70 && tile.h > 34;
+          const selected = selection?.kind === 'file' && selection.path === path;
+          return (
+            <button
+              key={path}
+              type="button"
+              className={`tile ${worst ? `tint-${severityMeta[worst].tint} has-findings` : ''} ${fileFindings.length && !open.length ? 'is-cleared' : ''} ${hotFile === path ? 'is-hot' : ''} ${selected ? 'is-selected' : ''}`}
+              style={{
+                left: tile.x + gutter,
+                top: tile.y + gutter,
+                width: tile.w - gutter * 2,
+                height: tile.h - gutter * 2,
+              }}
+              title={`${path} · +${stat.added} −${stat.removed}${fileFindings.length ? ` · ${fileFindings.length} finding${fileFindings.length === 1 ? '' : 's'}` : ''}`}
+              aria-label={`${path}, ${stat.added} added, ${stat.removed} removed, ${fileFindings.length} findings`}
+              onClick={() => select({ kind: 'file', path })}
+              onPointerEnter={() => setHover(`file:${path}`)}
+              onPointerLeave={() => setHover(null)}
+            >
+              {roomy && (
+                <span className="tile-text">
+                  <strong>{fileName(path)}</strong>
+                  {tile.h > 54 && <small>{dirName(path) || './'}</small>}
+                </span>
+              )}
+              {fileFindings.length > 0 && <span className="tile-count">{fileFindings.length}</span>}
+              {change && change.status !== 'M' && tile.w > 40 && (
+                <span className={`tile-status st-${change.status}`}>{change.status}</span>
+              )}
+              <span className="tile-churn" aria-hidden="true">
+                <i className="add" style={{ width: `${(stat.added / total) * 100}%` }} />
+                <i className="del" style={{ width: `${(stat.removed / total) * 100}%` }} />
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const CardBody = ({ card, finding }: { card: CardBox; finding: Finding | undefined }) => {
   const { session, select, interaction, status, events, refresh, historical } = useReview();
   const { act, busy } = useWorkspace();
   const snapshot = session.snapshot;
@@ -315,46 +472,17 @@ const CardBody = ({
         </button>
       );
     }
-    case 'file': {
-      const path = card.ref ?? '';
-      const change = snapshot.changes.find(
-        (entry) => entry.newPath === path || entry.oldPath === path,
-      );
-      const stat = stats.get(path) ?? { added: 0, removed: 0 };
-      const fileFindings = session.findings.filter((entry) => entry.file === path);
-      const total = Math.max(1, stat.added + stat.removed);
-      return (
-        <button type="button" className="card-hit" onClick={() => select({ kind: 'file', path })}>
-          <span className="file-row">
-            <span className={`file-status st-${change?.status ?? 'M'}`}>
-              {change?.status ?? 'M'}
-            </span>
-            <span className="file-text">
-              <strong>{fileName(path)}</strong>
-              <small>{dirName(path) || './'}</small>
-            </span>
-            {fileFindings.length > 0 && <span className="file-flags">{fileFindings.length}</span>}
-          </span>
-          <span className="churn">
-            <span className="churn-bar">
-              <i className="add" style={{ width: `${(stat.added / total) * 100}%` }} />
-              <i className="del" style={{ width: `${(stat.removed / total) * 100}%` }} />
-            </span>
-            <span className="add">+{stat.added}</span>
-            <span className="del">−{stat.removed}</span>
-            {change?.binary && <span>binary</span>}
-          </span>
-        </button>
-      );
-    }
+    case 'files':
+      return null;
     case 'finding': {
       if (!finding) return null;
       const current = status(finding);
       const severity = severityMeta[finding.severity];
       const settled = statusMeta[current].settled;
       return (
-        <div className={`finding-card ${settled ? 'is-settled' : ''} st-${current}`}>
-          <i className={`finding-strip tint-${severity.tint}`} />
+        <div
+          className={`finding-card tint-${severity.tint} ${settled ? 'is-settled' : ''} st-${current}`}
+        >
           <button
             type="button"
             className="card-hit"

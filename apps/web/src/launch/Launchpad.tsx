@@ -2,16 +2,19 @@ import {
   type CaptureRequest,
   CaptureRequestSchema,
   parsePullRequest,
+  profileAgents,
   type ReviewSession,
 } from '@reviewlab/domain';
 import { useState } from 'react';
 import { api } from '../api';
 import { useHotkeys } from '../lib/hooks';
-import { agentMeta, ago, isLive, scopeMeta, sessionTitle } from '../lib/meta';
+import { agentMeta, ago, isLive, profiles, scopeMeta, sessionTitle } from '../lib/meta';
 import { useWorkspace } from '../lib/workspace';
 import { Icon, type IconName } from '../ui/Icon';
 import { Avatar, Button, Field, Kbd, Switch, useToast } from '../ui/primitives';
-import { CrewPicker, CrewTuning, Destinations } from './Crew';
+import { CrewTuning } from './Crew';
+import { FlightPlan } from './FlightPlan';
+import { TokenPicker } from './TokenPicker';
 import { usePlan } from './usePlan';
 
 type Source = CaptureRequest['kind'] | 'github';
@@ -110,188 +113,236 @@ export const Launchpad = () => {
       : source === 'staged'
         ? 'Review staged changes'
         : 'Review selected scope';
+  const profile = profiles.find((entry) => entry.id === options?.profile);
+  const sourceOptions = sources.map((entry) => ({
+    id: entry.id,
+    label: sourceText(entry.id).title,
+    hint: sourceText(entry.id).blurb,
+    lead: <Icon name={entry.icon} size={16} />,
+  }));
+  const crewOptions = profiles.map((entry) => ({
+    id: entry.id,
+    label: `${entry.name} crew`,
+    hint: entry.blurb,
+    lead: (
+      <span className="crew-stack">
+        {profileAgents[entry.id].map((id) => (
+          <Avatar key={id} tint={agentMeta[id].tint} glyph={agentMeta[id].glyph} size={20} />
+        ))}
+      </span>
+    ),
+  }));
   return (
     <div className="launch">
       <div className="launch-inner">
-        <header className="launch-hero">
-          <p className="eyebrow">
-            {greeting()}
-            {name ? (
+        <p className="eyebrow">
+          {greeting()}
+          {name ? (
+            <>
+              {' '}
+              · <strong>{name}</strong>
+            </>
+          ) : null}
+        </p>
+        <h1 className="sr-only">New review</h1>
+        <div className="sentence" role="group" aria-label="Describe the review">
+          <span className="sentence-line">
+            Review{' '}
+            <TokenPicker
+              label="Git scope"
+              value={source}
+              options={sourceOptions}
+              onChange={setSource}
+              display={sourceText(source).title.toLowerCase()}
+            />
+            {source === 'branch' && (
               <>
                 {' '}
-                · <strong>{name}</strong>
+                against{' '}
+                <InlineInput label="Base branch" value={base} onChange={setBase} width={7} />
               </>
-            ) : null}
-          </p>
-          <h1>What should we look at?</h1>
-          <p className="lede">
-            ReviewLab freezes your changes, hands them to a crew of AI reviewers, and lays every
-            finding out on a board for you to triage. Nothing touches your files without your say.
-          </p>
-        </header>
-
-        <section className="step" aria-labelledby="step-what">
-          <div className="step-head">
-            <span className="step-num">1</span>
-            <h2 id="step-what">Pick the changes</h2>
-          </div>
-          <div className="source-grid" role="radiogroup" aria-label="Git scope">
-            {sources.map((entry) => {
-              const text = sourceText(entry.id);
-              const on = source === entry.id;
-              return (
-                <button
-                  key={entry.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={on}
-                  className={`source-card ${on ? 'is-on' : ''}`}
-                  onClick={() => setSource(entry.id)}
-                >
-                  <span className="source-icon">
-                    <Icon name={entry.icon} size={18} />
-                  </span>
-                  <strong>{text.title}</strong>
-                  <small>{text.blurb}</small>
-                  {on && (
-                    <span className="source-check">
-                      <Icon name="check" size={12} />
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-          <div className="source-options">
-            {(source === 'unstaged' || source === 'working-tree') && (
-              <Switch
-                checked={untracked}
-                onChange={setUntracked}
-                label="Include new untracked files"
-                hint="Ignored files always stay out."
-              />
-            )}
-            {source === 'branch' && (
-              <Field label="Compare against" hint="We review everything since the merge-base.">
-                <input
-                  value={base}
-                  onChange={(event) => setBase(event.target.value)}
-                  placeholder="main"
-                />
-              </Field>
             )}
             {source === 'commit-range' && (
-              <div className="row-2">
-                <Field label="From">
-                  <input value={from} onChange={(event) => setFrom(event.target.value)} />
-                </Field>
-                <Field label="To">
-                  <input value={to} onChange={(event) => setTo(event.target.value)} />
-                </Field>
-              </div>
+              <>
+                {' '}
+                from <InlineInput label="From ref" value={from} onChange={setFrom} width={7} /> to{' '}
+                <InlineInput label="To ref" value={to} onChange={setTo} width={5} />
+              </>
             )}
             {source === 'github' && (
               <>
-                <Field
+                {' '}
+                <InlineInput
                   label="PR number or link"
-                  hint={
-                    <>
-                      Uses your <code>gh</code> login. The PR must belong to this checkout’s origin.
-                    </>
-                  }
-                >
-                  <input
-                    value={pr}
-                    onChange={(event) => setPr(event.target.value)}
-                    placeholder="123 or https://github.com/owner/repo/pull/123"
-                    disabled={githubBlocked}
-                  />
-                </Field>
-                {githubBlocked ? (
-                  <p className="note is-warn">
-                    <Icon name="lock" size={14} /> GitHub is blocked while ReviewLab is local-only.{' '}
-                    <button type="button" className="link" onClick={() => go({ kind: 'settings' })}>
-                      Change privacy
-                    </button>
-                  </p>
-                ) : (
-                  <Switch
-                    checked={githubConsent}
-                    onChange={setGithubConsent}
-                    label="Allow GitHub read access for this capture"
-                    hint="GitHub sees the repo and PR number. PR text and code go only to the reviewers below."
-                  />
-                )}
+                  value={pr}
+                  onChange={setPr}
+                  width={9}
+                  placeholder="#123"
+                  disabled={githubBlocked}
+                />
               </>
             )}
-            {source !== 'github' &&
-              (narrow ? (
-                <Field label="Only these paths" hint="Comma or newline separated. Globs work.">
-                  <textarea
-                    rows={2}
-                    value={paths}
-                    onChange={(event) => setPaths(event.target.value)}
-                    placeholder="src/payments/**, README.md"
-                  />
-                </Field>
-              ) : (
-                <button type="button" className="link" onClick={() => setNarrow(true)}>
-                  + Only review certain paths
+          </span>
+          <span className="sentence-line">
+            with the{' '}
+            {options ? (
+              <TokenPicker
+                label="Review depth"
+                value={options.profile}
+                options={crewOptions}
+                onChange={(id) => setOptions({ ...options, profile: id })}
+                display={`${profile?.name.toLowerCase() ?? 'custom'} crew`}
+              />
+            ) : (
+              <span className="token is-loading">crew</span>
+            )}
+            {options && (
+              <button
+                type="button"
+                className={`token token-toggle ${options.verify ? 'is-on' : ''}`}
+                aria-pressed={options.verify}
+                onClick={() => setOptions({ ...options, verify: !options.verify })}
+                title="A second pass re-checks every finding before you see it."
+              >
+                <Icon name={options.verify ? 'shield' : 'plus'} size={15} />
+                {options.verify ? 'verified' : 'verifier'}
+              </button>
+            )}
+          </span>
+          <span className="sentence-line sentence-dim">
+            {local ? (
+              <>
+                and keep it <span className="sentence-safe">on this machine.</span>
+              </>
+            ) : (
+              <>
+                and allow <span className="sentence-cloud">cloud models.</span>
+              </>
+            )}
+          </span>
+        </div>
+
+        <div className="modifiers">
+          {(source === 'unstaged' || source === 'working-tree') && (
+            <button
+              type="button"
+              className={`chip ${untracked ? 'is-on' : ''}`}
+              aria-pressed={untracked}
+              onClick={() => setUntracked(!untracked)}
+            >
+              <Icon name={untracked ? 'check' : 'plus'} size={13} /> Include untracked files
+            </button>
+          )}
+          {source !== 'github' && (
+            <button
+              type="button"
+              className={`chip ${narrow ? 'is-on' : ''}`}
+              aria-expanded={narrow}
+              onClick={() => setNarrow(!narrow)}
+            >
+              <Icon name="file" size={13} /> Only certain paths
+            </button>
+          )}
+          <button
+            type="button"
+            className={`chip ${tune ? 'is-on' : ''}`}
+            aria-expanded={tune}
+            onClick={() => setTune(!tune)}
+          >
+            <Icon name="sliders" size={13} /> Tune crew & models
+          </button>
+          <button type="button" className="chip" onClick={() => go({ kind: 'settings' })}>
+            <Icon name="gear" size={13} /> Change model
+          </button>
+        </div>
+
+        {narrow && source !== 'github' && (
+          <div className="launch-drawer">
+            <Field label="Only these paths" hint="Comma or newline separated. Globs work.">
+              <textarea
+                rows={2}
+                value={paths}
+                onChange={(event) => setPaths(event.target.value)}
+                placeholder="src/payments/**, README.md"
+              />
+            </Field>
+          </div>
+        )}
+        {source === 'github' && (
+          <div className="launch-drawer">
+            {githubBlocked ? (
+              <p className="note is-warn">
+                <Icon name="lock" size={14} /> GitHub is blocked while ReviewLab is local-only.{' '}
+                <button type="button" className="link" onClick={() => go({ kind: 'settings' })}>
+                  Change privacy
                 </button>
-              ))}
+              </p>
+            ) : (
+              <Switch
+                checked={githubConsent}
+                onChange={setGithubConsent}
+                label="Allow GitHub read access for this capture"
+                hint={
+                  <>
+                    Uses your <code>gh</code> login. GitHub sees the repo and PR number. PR text and
+                    code go only to the reviewers below.
+                  </>
+                }
+              />
+            )}
           </div>
-        </section>
+        )}
+        {tune && options && (
+          <div className="launch-drawer">
+            {options.workflow && (
+              <p className="note">
+                <Icon name="branch" size={14} /> A custom workflow from your saved settings is
+                active; it decides which reviewers run.
+              </p>
+            )}
+            <CrewTuning options={options} setOptions={setOptions} plan={draftPlan} />
+          </div>
+        )}
 
-        <section className="step" aria-labelledby="step-crew">
-          <div className="step-head">
-            <span className="step-num">2</span>
-            <h2 id="step-crew">Choose your crew</h2>
-            <button
-              type="button"
-              className="link step-aside"
-              onClick={() => setTune(!tune)}
-              aria-expanded={tune}
-            >
-              <Icon name="sliders" size={14} /> {tune ? 'Hide tuning' : 'Tune'}
-            </button>
-          </div>
-          {options ? (
-            <>
-              <CrewPicker options={options} setOptions={setOptions} plan={draftPlan} />
-              {tune && <CrewTuning options={options} setOptions={setOptions} plan={draftPlan} />}
-            </>
-          ) : (
-            <div className="skeleton" style={{ height: 150 }} />
-          )}
-        </section>
+        <div className="launch-go">
+          <Button
+            variant="primary"
+            size="lg"
+            disabled={
+              busy ||
+              !plan ||
+              checking ||
+              (source === 'github' && (githubBlocked || !githubConsent || !pr.trim()))
+            }
+            onClick={start}
+          >
+            <Icon name="play" size={14} />
+            {startLabel}
+            <Kbd>⌘↵</Kbd>
+          </Button>
+          <span className="launch-hint">
+            Nothing touches your files without your say. {crew.length || '…'} reviewer
+            {crew.length === 1 ? '' : 's'} ready.
+          </span>
+        </div>
+        {error && (
+          <p className="note is-error" role="alert">
+            <Icon name="flag" size={14} /> {error}
+          </p>
+        )}
 
-        <section className="step" aria-labelledby="step-where">
-          <div className="step-head">
-            <span className="step-num">3</span>
-            <h2 id="step-where">Where your code goes</h2>
-            <button
-              type="button"
-              className="link step-aside"
-              onClick={() => go({ kind: 'settings' })}
-            >
-              <Icon name="gear" size={14} /> Change model
-            </button>
-          </div>
-          {draftPlan ? (
-            <Destinations plan={draftPlan} />
-          ) : (
-            <div className="skeleton" style={{ height: 64 }} />
-          )}
-          {error && (
-            <p className="note is-error" role="alert">
-              <Icon name="flag" size={14} /> {error}
-            </p>
-          )}
+        <section className="flight-wrap" aria-labelledby="flight-title">
+          <h2 id="flight-title" className="kicker">
+            Flight plan
+          </h2>
+          <FlightPlan plan={draftPlan} scope={sourceText(source).title} />
         </section>
 
         {recent.length > 0 && (
           <section className="recent" aria-labelledby="recent-title">
-            <h2 id="recent-title">Pick up where you left off</h2>
+            <h2 id="recent-title" className="kicker">
+              Pick up where you left off
+            </h2>
             <div className="recent-grid">
               {recent.map((session) => (
                 <button
@@ -300,7 +351,18 @@ export const Launchpad = () => {
                   className="recent-card"
                   onClick={() => go({ kind: 'review', id: session.id })}
                 >
-                  <span className={`session-dot ${isLive(session.status) ? 'is-live' : ''}`} />
+                  <span className="recent-thumb" aria-hidden="true">
+                    {Array.from({ length: Math.min(12, session.findingCount ?? 0) }, (_, index) => (
+                      <i
+                        key={index}
+                        style={{
+                          left: `${14 + ((index * 37) % 72)}%`,
+                          top: `${18 + ((index * 53) % 64)}%`,
+                        }}
+                      />
+                    ))}
+                    {isLive(session.status) && <span className="loader small" />}
+                  </span>
                   <strong>{sessionTitle(session)}</strong>
                   <small>
                     {ago(session.createdAt)} · {session.findingCount ?? 0} findings ·{' '}
@@ -312,49 +374,33 @@ export const Launchpad = () => {
           </section>
         )}
       </div>
-
-      <div className="launch-bar">
-        <div className="launch-summary">
-          <span className="launch-avatars">
-            {crew.map((route) => (
-              <Avatar
-                key={route.id}
-                tint={agentMeta[route.id].tint}
-                glyph={agentMeta[route.id].glyph}
-                size={24}
-              />
-            ))}
-          </span>
-          <span>
-            <strong>{sourceText(source).title}</strong> · {crew.length || '…'} reviewer
-            {crew.length === 1 ? '' : 's'} ·{' '}
-            {local ? (
-              <span className="ok">
-                <Icon name="lock" size={13} /> stays on this machine
-              </span>
-            ) : (
-              <span className="warn">
-                <Icon name="cloud" size={13} /> cloud allowed
-              </span>
-            )}
-          </span>
-        </div>
-        <Button
-          variant="primary"
-          size="lg"
-          disabled={
-            busy ||
-            !plan ||
-            checking ||
-            (source === 'github' && (githubBlocked || !githubConsent || !pr.trim()))
-          }
-          onClick={start}
-        >
-          <Icon name="play" size={14} />
-          {startLabel}
-          <Kbd>⌘↵</Kbd>
-        </Button>
-      </div>
     </div>
   );
 };
+
+const InlineInput = ({
+  label,
+  value,
+  onChange,
+  width,
+  placeholder,
+  disabled,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  width: number;
+  placeholder?: string;
+  disabled?: boolean;
+}) => (
+  <input
+    className="token-input"
+    aria-label={label}
+    value={value}
+    placeholder={placeholder}
+    disabled={disabled}
+    spellCheck={false}
+    style={{ width: `${Math.max(width, value.length + 1)}ch` }}
+    onChange={(event) => onChange(event.target.value)}
+  />
+);

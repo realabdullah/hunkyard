@@ -1,7 +1,8 @@
 import type { AgentId, Finding, ReviewSession } from '@reviewlab/domain';
-import { sortFindings } from '../lib/meta';
+import { severityMeta, sortFindings } from '../lib/meta';
+import { squarify, type Tile } from './treemap';
 
-export type CardKind = 'snapshot' | 'pr' | 'chat' | 'agent' | 'file' | 'finding' | 'placeholder';
+export type CardKind = 'snapshot' | 'pr' | 'chat' | 'agent' | 'files' | 'finding' | 'placeholder';
 export type CardBox = {
   id: string;
   kind: CardKind;
@@ -11,23 +12,33 @@ export type CardBox = {
   h: number;
   ref?: string;
 };
-export type Section = { id: string; title: string; tint: string; cards: string[] };
+export type Section = { id: string; title: string; count?: number; cards: string[] };
+export type Stats = Map<string, { added: number; removed: number }>;
 
 export const sizes = {
-  snapshot: { w: 260, h: 184 },
-  pr: { w: 260, h: 132 },
-  chat: { w: 260, h: 104 },
-  agent: { w: 232, h: 86 },
-  file: { w: 270, h: 78 },
-  finding: { w: 320, h: 138 },
+  snapshot: { w: 264, h: 176 },
+  pr: { w: 264, h: 124 },
+  chat: { w: 264, h: 96 },
+  agent: { w: 240, h: 84 },
+  files: { w: 380, h: 300 },
+  finding: { w: 320, h: 120 },
   placeholder: { w: 320, h: 138 },
 } as const;
 
-const gap = 18;
-const columns = { input: 0, crew: 330, files: 640, findings: 990 };
+/** Inner geometry of the change map card: header strip, then the tile field. */
+export const mapInset = { top: 52, side: 10, bottom: 10 };
 
-/** Pipeline layout: frozen input → crew → files → findings, with findings beside their file. */
-export const layoutBoard = (session: ReviewSession) => {
+const gap = 16;
+const columns = { input: 0, crew: 330, files: 650, findings: 1110 };
+
+const mapHeight = (count: number) =>
+  count <= 3 ? 220 : count <= 10 ? 300 : count <= 30 ? 380 : 460;
+
+/**
+ * Pipeline layout: frozen input → crew → change map → findings. The change map is one fixed-size
+ * treemap whatever the file count, so the board never grows a column per file.
+ */
+export const layoutBoard = (session: ReviewSession, stats: Stats) => {
   const cards: CardBox[] = [];
   const put = (id: string, kind: CardKind, x: number, y: number, ref?: string) => {
     const box: CardBox = { id, kind, x, y, ...sizes[kind], ...(ref ? { ref } : {}) };
@@ -48,28 +59,42 @@ export const layoutBoard = (session: ReviewSession) => {
     put(`agent:${id}`, 'agent', columns.crew, index * (sizes.agent.h + gap), id);
   });
 
-  const byFile = new Map<string, Finding[]>();
-  for (const finding of sortFindings(session.findings))
-    byFile.set(finding.file, [...(byFile.get(finding.file) ?? []), finding]);
-  const files = [...session.snapshot.files].sort(
-    (a, b) => Number(byFile.has(b)) - Number(byFile.has(a)),
+  const files = session.snapshot.files;
+  const map = put('files', 'files', columns.files, 0);
+  map.h = mapHeight(files.length);
+  const weight = (path: string) => {
+    const stat = stats.get(path);
+    return Math.max(1, (stat?.added ?? 0) + (stat?.removed ?? 0)) ** 0.7;
+  };
+  const heaviest = Math.max(1, ...files.map(weight));
+  const tiles = squarify(
+    files,
+    (path) => Math.max(weight(path), heaviest * 0.12),
+    map.w - mapInset.side * 2,
+    map.h - mapInset.top - mapInset.bottom,
   );
-  y = 0;
-  for (const file of files) {
-    put(`file:${file}`, 'file', columns.files, y, file);
-    const findings = byFile.get(file) ?? [];
-    findings.forEach((finding, index) => {
-      put(
-        `finding:${finding.id}`,
-        'finding',
-        columns.findings,
-        y + index * (sizes.finding.h + gap),
-        finding.id,
-      );
-    });
-    const stack = findings.length * (sizes.finding.h + gap) - gap;
-    y += Math.max(sizes.file.h, stack) + gap + (findings.length ? 14 : 0);
-  }
+  const tileByPath = new Map(tiles.map((tile) => [tile.item, tile]));
+
+  const findings = sortFindings(session.findings).sort((a, b) => {
+    const ta = tileByPath.get(a.file);
+    const tb = tileByPath.get(b.file);
+    const ca = ta ? ta.y + ta.h / 2 : 0;
+    const cb = tb ? tb.y + tb.h / 2 : 0;
+    return (
+      ca - cb ||
+      (ta?.x ?? 0) - (tb?.x ?? 0) ||
+      severityMeta[a.severity].rank - severityMeta[b.severity].rank
+    );
+  });
+  findings.forEach((finding, index) => {
+    put(
+      `finding:${finding.id}`,
+      'finding',
+      columns.findings,
+      index * (sizes.finding.h + gap),
+      finding.id,
+    );
+  });
   if (!session.findings.length) put('placeholder', 'placeholder', columns.findings, 0);
 
   const ids = (kind: CardKind) => cards.filter((card) => card.kind === kind).map((card) => card.id);
@@ -77,20 +102,36 @@ export const layoutBoard = (session: ReviewSession) => {
     {
       id: 'input',
       title: 'Frozen input',
-      tint: 'blue',
       cards: [...ids('snapshot'), ...ids('pr'), ...ids('chat')],
     },
-    { id: 'crew', title: 'Review crew', tint: 'purple', cards: ids('agent') },
-    { id: 'files', title: 'Changed files', tint: 'gray', cards: ids('file') },
+    { id: 'crew', title: 'Crew', count: agents.length, cards: ids('agent') },
+    { id: 'files', title: 'Change map', count: files.length, cards: ids('files') },
     {
       id: 'findings',
-      title: session.findings.length ? `Findings · ${session.findings.length}` : 'Findings',
-      tint: 'yellow',
+      title: 'Findings',
+      count: session.findings.length,
       cards: [...ids('finding'), ...ids('placeholder')],
     },
   ];
-  return { cards, sections };
+  return { cards, sections, tiles };
 };
+
+/** A file tile's rectangle in board coordinates, given the (possibly dragged) map card. */
+export const tileRect = (map: CardBox, tile: Tile<string>) => ({
+  x: map.x + mapInset.side + tile.x,
+  y: map.y + mapInset.top + tile.y,
+  w: tile.w,
+  h: tile.h,
+});
+
+export const worstSeverity = (findings: Finding[]) =>
+  findings.reduce<Finding['severity'] | null>(
+    (worst, finding) =>
+      !worst || severityMeta[finding.severity].rank < severityMeta[worst].rank
+        ? finding.severity
+        : worst,
+    null,
+  );
 
 export const boundsOf = (cards: { x: number; y: number; w: number; h: number }[], pad = 0) => {
   if (!cards.length) return { x: 0, y: 0, w: 0, h: 0 };

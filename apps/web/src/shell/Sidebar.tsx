@@ -2,6 +2,7 @@ import type { SessionSummary } from '@reviewlab/domain';
 import { useMemo } from 'react';
 import { ago, isLive, providerMeta, sessionTitle } from '../lib/meta';
 import { useWorkspace } from '../lib/workspace';
+import { BrandMark } from '../ui/BrandMark';
 import { Icon, type IconName } from '../ui/Icon';
 import { IconButton, Kbd } from '../ui/primitives';
 
@@ -39,9 +40,7 @@ export const Sidebar = ({
   return (
     <nav className="sidebar" aria-label="Workspace">
       <div className="sidebar-head">
-        <span className="brand-mark" aria-hidden="true">
-          R
-        </span>
+        <BrandMark />
         <div className="sidebar-repo">
           <strong>{name || 'This repository'}</strong>
           <small>ReviewLab</small>

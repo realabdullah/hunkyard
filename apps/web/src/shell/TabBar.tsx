@@ -1,6 +1,7 @@
 import { isLive, sessionTitle } from '../lib/meta';
+import { type ThemePreference, useTheme } from '../lib/theme';
 import { useWorkspace } from '../lib/workspace';
-import { Icon } from '../ui/Icon';
+import { Icon, type IconName } from '../ui/Icon';
 import { IconButton } from '../ui/primitives';
 
 export const TabBar = ({
@@ -62,7 +63,36 @@ export const TabBar = ({
           );
         })}
       </div>
+      <ThemeSwitch />
       <IconButton icon="keyboard" label="Keyboard shortcuts (?)" onClick={showHelp} />
+    </div>
+  );
+};
+
+const themes: { id: ThemePreference; label: string; icon: IconName }[] = [
+  { id: 'system', label: 'Match system theme', icon: 'monitor' },
+  { id: 'light', label: 'Light theme', icon: 'sun' },
+  { id: 'dark', label: 'Dark theme', icon: 'moon' },
+];
+
+const ThemeSwitch = () => {
+  const { preference, setTheme } = useTheme();
+  return (
+    <div className="theme-switch" role="radiogroup" aria-label="Theme">
+      {themes.map((theme) => (
+        <button
+          key={theme.id}
+          type="button"
+          role="radio"
+          aria-checked={preference === theme.id}
+          aria-label={theme.label}
+          title={theme.label}
+          className={preference === theme.id ? 'is-on' : ''}
+          onClick={() => setTheme(theme.id)}
+        >
+          <Icon name={theme.icon} size={14} />
+        </button>
+      ))}
     </div>
   );
 };

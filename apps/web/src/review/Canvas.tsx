@@ -12,7 +12,11 @@ import { IconButton } from '../ui/primitives';
 
 export type View = { x: number; y: number; k: number };
 export type Bounds = { x: number; y: number; w: number; h: number };
-export type CanvasHandle = { fit: (bounds: Bounds) => void; view: () => View };
+export type CanvasHandle = {
+  fit: (bounds: Bounds) => void;
+  view: () => View;
+  reveal: (bounds: Bounds, insetRight: number) => void;
+};
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
@@ -30,6 +34,7 @@ export const Canvas = forwardRef<
   viewRef.current = view;
   const [space, setSpace] = useState(false);
   const [panning, setPanning] = useState(false);
+  const [gliding, setGliding] = useState(false);
 
   const fit = useCallback((bounds: Bounds) => {
     const element = host.current;
@@ -42,7 +47,29 @@ export const Canvas = forwardRef<
       y: Math.max(48, (height - bounds.h * k) / 2) - bounds.y * k,
     });
   }, []);
-  useImperativeHandle(ref, () => ({ fit, view: () => viewRef.current }), [fit]);
+  /** Pans just enough to keep `bounds` clear of an overlay docked on the right. */
+  const reveal = useCallback((bounds: Bounds, insetRight: number) => {
+    const element = host.current;
+    if (!element) return;
+    const { width, height } = element.getBoundingClientRect();
+    setGliding(true);
+    setTimeout(() => setGliding(false), 480);
+    setView((current) => {
+      const left = bounds.x * current.k + current.x;
+      const right = (bounds.x + bounds.w) * current.k + current.x;
+      const top = bounds.y * current.k + current.y;
+      const bottom = (bounds.y + bounds.h) * current.k + current.y;
+      const limit = width - insetRight - 24;
+      let dx = 0;
+      let dy = 0;
+      if (right > limit) dx = limit - right;
+      if (left + dx < 24) dx = 24 - left;
+      if (bottom > height - 70) dy = height - 70 - bottom;
+      if (top + dy < 24) dy = 24 - top;
+      return dx || dy ? { ...current, x: current.x + dx, y: current.y + dy } : current;
+    });
+  }, []);
+  useImperativeHandle(ref, () => ({ fit, reveal, view: () => viewRef.current }), [fit, reveal]);
   const fitted = useRef(false);
   useEffect(() => {
     if (fitted.current || initial.w === 0) return;
@@ -143,7 +170,7 @@ export const Canvas = forwardRef<
   return (
     <div
       ref={host}
-      className={`canvas ${space ? 'is-space' : ''} ${panning ? 'is-panning' : ''}`}
+      className={`canvas ${space ? 'is-space' : ''} ${panning ? 'is-panning' : ''} ${gliding ? 'is-gliding' : ''}`}
       style={{
         backgroundSize: `${dot}px ${dot}px`,
         backgroundPosition: `${view.x}px ${view.y}px`,

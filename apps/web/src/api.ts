@@ -4,14 +4,53 @@ export const hasToken = () => Boolean(token);
 export const setToken = (value: string) => {
   token = value.trim();
 };
-export const eventStream = (path: string, signal: AbortSignal) => {
+export const eventStream = (path: string, signal: AbortSignal, init?: RequestInit) => {
   if (!token)
     return Promise.reject(new Error('Connect to the local workspace to receive progress'));
   return fetch(`/api/v1${path}`, {
-    headers: { authorization: `Bearer ${token}`, 'x-reviewlab-csrf': '1' },
+    ...init,
+    headers: {
+      authorization: `Bearer ${token}`,
+      'x-reviewlab-csrf': '1',
+      ...(init?.body ? { 'content-type': 'application/json' } : {}),
+    },
     signal,
   });
 };
+
+/** Splits a server-sent event body into `{ event, data }` frames; comments are skipped. */
+export async function* sseFrames(body: ReadableStream<Uint8Array>) {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  try {
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) return;
+      buffer += decoder.decode(chunk.value, { stream: true });
+      if (buffer.length > 1_000_000) throw new Error('Server event too large');
+      let boundary = buffer.match(/\r?\n\r?\n/);
+      while (boundary?.index !== undefined) {
+        const lines = buffer.slice(0, boundary.index).split(/\r?\n/);
+        buffer = buffer.slice(boundary.index + boundary[0].length);
+        const data = lines
+          .filter((line) => line.startsWith('data:'))
+          .map((line) => line.slice(5).trimStart())
+          .join('\n');
+        const event = lines
+          .find((line) => line.startsWith('event:'))
+          ?.slice(6)
+          .trim();
+        if (data) yield { event: event ?? 'message', data };
+        boundary = buffer.match(/\r?\n\r?\n/);
+      }
+    }
+  } finally {
+    await reader.cancel().catch(() => {});
+    reader.releaseLock();
+  }
+}
+
 export const api = async <T>(path: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(`/api/v1${path}`, {
     ...init,

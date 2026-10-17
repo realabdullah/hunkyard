@@ -5,7 +5,7 @@ import {
   type ReviewSession,
 } from '@reviewlab/domain';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { api, eventStream } from '../api';
+import { api, eventStream, sseFrames } from '../api';
 import { isLive, runIdOf } from './meta';
 
 /** Loads a session, its runs and the chosen run; polls quickly while a review is running. */
@@ -79,41 +79,15 @@ export const useEvents = (sessionId: string, onEvent?: () => void) => {
         if (!response.ok || !response.body) throw new Error('Progress connection failed');
         setConnected(true);
         failures = 0;
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-        try {
-          while (alive) {
-            const chunk = await reader.read();
-            if (chunk.done) break;
-            buffer += decoder.decode(chunk.value, { stream: true });
-            if (buffer.length > 1_000_000) throw new Error('Progress event too large');
-            let boundary = buffer.match(/\r?\n\r?\n/);
-            while (boundary?.index !== undefined) {
-              const frame = buffer.slice(0, boundary.index);
-              buffer = buffer.slice(boundary.index + boundary[0].length);
-              const payload = frame
-                .split(/\r?\n/)
-                .filter((line) => line.startsWith('data:'))
-                .map((line) => line.slice(5).trimStart())
-                .join('\n');
-              if (payload) {
-                const event = DomainEventSchema.parse(JSON.parse(payload));
-                if (event.sessionId !== sessionId) throw new Error('Invalid progress session');
-                if (event.cursor > cursor) {
-                  cursor = event.cursor;
-                  if (alive) {
-                    setEvents((previous) => [...previous, event]);
-                    callback.current?.();
-                  }
-                }
-              }
-              boundary = buffer.match(/\r?\n\r?\n/);
-            }
+        for await (const frame of sseFrames(response.body)) {
+          if (!alive) break;
+          const event = DomainEventSchema.parse(JSON.parse(frame.data));
+          if (event.sessionId !== sessionId) throw new Error('Invalid progress session');
+          if (event.cursor > cursor) {
+            cursor = event.cursor;
+            setEvents((previous) => [...previous, event]);
+            callback.current?.();
           }
-        } finally {
-          await reader.cancel().catch(() => {});
-          reader.releaseLock();
         }
         if (alive) throw new Error('Progress connection closed');
       } catch {

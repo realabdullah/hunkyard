@@ -17,7 +17,7 @@ export const severityMeta: Record<
   critical: { label: 'Critical', tint: 'red', rank: 0 },
   high: { label: 'High', tint: 'orange', rank: 1 },
   major: { label: 'Major', tint: 'orange', rank: 1 },
-  medium: { label: 'Medium', tint: 'yellow', rank: 2 },
+  medium: { label: 'Medium', tint: 'purple', rank: 2 },
   minor: { label: 'Minor', tint: 'blue', rank: 3 },
   low: { label: 'Low', tint: 'blue', rank: 3 },
   info: { label: 'Info', tint: 'gray', rank: 4 },
@@ -25,7 +25,7 @@ export const severityMeta: Record<
 
 export const statusMeta: Record<FindingStatus, { label: string; tint: Tint; settled: boolean }> = {
   open: { label: 'Open', tint: 'gray', settled: false },
-  investigating: { label: 'Investigating', tint: 'purple', settled: false },
+  investigating: { label: 'Investigating', tint: 'yellow', settled: false },
   reintroduced: { label: 'Reintroduced', tint: 'red', settled: false },
   accepted: { label: 'Will fix', tint: 'blue', settled: true },
   fixed: { label: 'Fixed', tint: 'green', settled: true },

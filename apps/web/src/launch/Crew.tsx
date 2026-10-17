@@ -2,75 +2,20 @@ import {
   type AgentId,
   isHostedProvider,
   ProviderSchema,
-  profileAgents,
   providerDefaults,
   type ReviewOptions,
   type ReviewPlan,
 } from '@reviewlab/domain';
 import { useState } from 'react';
-import { agentMeta, profiles, providerMeta } from '../lib/meta';
+import { agentMeta, providerMeta } from '../lib/meta';
 import { Icon } from '../ui/Icon';
-import { Avatar, Field, Switch } from '../ui/primitives';
+import { Avatar, Field } from '../ui/primitives';
 
 type Props = {
   options: ReviewOptions;
   setOptions: (options: ReviewOptions) => void;
   plan: ReviewPlan | null;
   disabled?: boolean;
-};
-
-export const CrewPicker = ({ options, setOptions, disabled }: Props) => {
-  const update = (patch: Partial<ReviewOptions>) => setOptions({ ...options, ...patch });
-  return (
-    <div className="crew">
-      <div className="crew-profiles" role="radiogroup" aria-label="Review depth">
-        {profiles.map((profile) => {
-          const agents = profileAgents[profile.id];
-          const on = options.profile === profile.id && !options.workflow;
-          return (
-            <button
-              key={profile.id}
-              type="button"
-              role="radio"
-              aria-checked={on}
-              disabled={disabled}
-              className={`crew-card ${on ? 'is-on' : ''}`}
-              onClick={() => update({ profile: profile.id })}
-            >
-              <span className="crew-stack">
-                {agents.map((id, index) => (
-                  <span key={id} style={{ zIndex: 10 - index }}>
-                    <Avatar tint={agentMeta[id].tint} glyph={agentMeta[id].glyph} size={30} />
-                  </span>
-                ))}
-              </span>
-              <strong>{profile.name}</strong>
-              <small>{profile.blurb}</small>
-              <span className="crew-names">
-                {agents.map((id) => agentMeta[id].name).join(' · ')}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-      {options.workflow && (
-        <p className="note">
-          <Icon name="branch" size={14} /> A custom workflow from your saved settings is active; it
-          decides which reviewers run.
-        </p>
-      )}
-      <div className="crew-verifier">
-        <Avatar tint="gray" glyph="V" size={30} />
-        <Switch
-          checked={options.verify}
-          disabled={disabled}
-          onChange={(verify) => update({ verify })}
-          label="Add a verifier"
-          hint="A second pass re-checks every finding before you see it. Fewer false alarms, a little slower."
-        />
-      </div>
-    </div>
-  );
 };
 
 /** Power-user knobs, tucked away: concurrency, budgets and per-reviewer model routing. */
@@ -249,51 +194,5 @@ export const CrewTuning = ({ options, setOptions, plan, disabled }: Props) => {
         </div>
       )}
     </div>
-  );
-};
-
-/** Every distinct destination that will receive source code, shown before anything is sent. */
-export const Destinations = ({ plan }: { plan: ReviewPlan }) => {
-  const seen = new Map<
-    string,
-    { provider: ReviewPlan['agents'][number]['target']; agents: AgentId[] }
-  >();
-  for (const route of plan.agents) {
-    const key = `${route.target.provider}|${route.target.endpoint}|${route.target.model}`;
-    const entry = seen.get(key);
-    if (entry) entry.agents.push(route.id);
-    else seen.set(key, { provider: route.target, agents: [route.id] });
-  }
-  return (
-    <ul className="destinations">
-      {[...seen.values()].map(({ provider: target, agents }) => {
-        const hosted = isHostedProvider(target.provider);
-        const blocked = hosted && (target.privacy !== 'cloud-allowed' || !target.cloudConsent);
-        return (
-          <li
-            key={`${target.endpoint}${target.model}`}
-            className={hosted ? 'is-cloud' : 'is-local'}
-          >
-            <span className="dest-icon">
-              <Icon name={hosted ? 'cloud' : 'lock'} />
-            </span>
-            <span className="dest-text">
-              <strong>
-                {providerMeta[target.provider].name} · {target.model || 'no model set'}
-              </strong>
-              <small>
-                {target.endpoint} — {hosted ? 'leaves this machine' : 'stays on this machine'}
-              </small>
-            </span>
-            <span className="dest-agents">
-              {agents.map((id) => (
-                <Avatar key={id} tint={agentMeta[id].tint} glyph={agentMeta[id].glyph} size={20} />
-              ))}
-            </span>
-            {blocked && <span className="dest-warn">Needs cloud consent</span>}
-          </li>
-        );
-      })}
-    </ul>
   );
 };

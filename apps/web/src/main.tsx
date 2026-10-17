@@ -4,6 +4,7 @@ import { hasToken, setToken } from './api';
 import { Launchpad } from './launch/Launchpad';
 import { useHotkeys, useStoredState } from './lib/hooks';
 import { sessionTitle } from './lib/meta';
+import { initTheme } from './lib/theme';
 import { useWorkspace, WorkspaceProvider } from './lib/workspace';
 import { ReviewView } from './review/ReviewView';
 import { SettingsView } from './settings/SettingsView';
@@ -125,6 +126,7 @@ const App = () => {
   );
 };
 
+initTheme();
 const root = document.getElementById('root');
 if (!root) throw new Error('ReviewLab root element is missing.');
 createRoot(root).render(
