@@ -27,7 +27,9 @@ import {
 
 export type { ModelCapabilities } from './capabilities';
 export { probeModel, probeModelCapabilities } from './capabilities';
-export type { SecretResolver } from './transport';
+export type { ChatDelta } from './stream';
+export { chatDeltas } from './stream';
+export type { ModelStreamTransport, ModelTransport, SecretResolver } from './transport';
 
 export { createModelGateway, validateTarget } from './transport';
 

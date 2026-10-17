@@ -70,6 +70,7 @@ export type ReviewServiceDependencies = {
     message: Interaction['messages'][number];
     model?: string;
     signal: AbortSignal;
+    onDelta?: (text: string) => void;
   }) => Promise<{ text: string; target: ModelTarget }>;
   applySessionRules?: (policy: ReviewPolicyBundle, rules: string[]) => ReviewPolicyBundle;
   patch?: {

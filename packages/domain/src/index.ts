@@ -439,6 +439,27 @@ export const OpenAIChatSchema = z.object({
     )
     .min(1),
 });
+/** One NDJSON line of an Ollama `/api/chat` stream. */
+export const OllamaChatChunkSchema = z.union([
+  z.object({ error: z.string() }),
+  z.object({
+    message: z.object({ content: z.string() }).optional(),
+    done: z.boolean(),
+    done_reason: z.string().optional(),
+  }),
+]);
+/** One `data:` payload of an OpenAI-compatible Chat Completions stream. */
+export const OpenAIChatChunkSchema = z.union([
+  z.object({ error: z.object({ message: z.string() }) }),
+  z.object({
+    choices: z.array(
+      z.object({
+        delta: z.object({ content: z.string().nullish() }).optional(),
+        finish_reason: z.string().nullish(),
+      }),
+    ),
+  }),
+]);
 export const OllamaModelsSchema = z.object({ models: z.array(z.object({ name: z.string() })) });
 export const OpenAIModelsSchema = z.object({ data: z.array(z.object({ id: z.string() })) });
 
@@ -463,7 +484,7 @@ export const RetentionRequestSchema = z
   .strict();
 export const SecretRequestSchema = z
   .object({
-    provider: z.enum(['openai', 'compatible', 'lm-studio', 'llama-cpp', 'ollama']),
+    provider: ProviderSchema,
     secret: z.string().min(1).max(4096).nullable(),
   })
   .strict();

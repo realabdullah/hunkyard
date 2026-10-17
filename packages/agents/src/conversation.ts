@@ -9,13 +9,22 @@ import {
   redactSecrets,
 } from '@reviewlab/domain';
 import { chatBody } from './requests';
-import { createModelGateway, type ModelTransport, type SecretResolver } from './transport';
+import { chatDeltas } from './stream';
+import {
+  createModelGateway,
+  type ModelStreamTransport,
+  type ModelTransport,
+  type SecretResolver,
+} from './transport';
+
+const failed = 'Model answer is missing or truncated. Question remains saved.';
 
 export const createConversationResponder =
   (
     loadTarget: () => Promise<ModelTarget>,
     resolveSecret?: SecretResolver,
     transport?: ModelTransport,
+    streamTransport?: ModelStreamTransport,
   ) =>
   async (input: {
     session: ReviewSession;
@@ -23,6 +32,8 @@ export const createConversationResponder =
     message: Interaction['messages'][number];
     model?: string;
     signal: AbortSignal;
+    /** Receives answer text as the model generates it; the saved answer is still validated whole. */
+    onDelta?: (text: string) => void;
   }) => {
     // Re-resolve policy on every question; the old run cannot grant current cloud consent.
     const target = {
@@ -68,11 +79,36 @@ export const createConversationResponder =
       throw new Error(
         'Conversation exceeds the configured budget. Start a shorter thread; no source was truncated.',
       );
-    const response = await createModelGateway(transport, resolveSecret).request(
+    const gateway = createModelGateway(transport, resolveSecret, streamTransport);
+    const path = target.provider === 'ollama' ? '/api/chat' : '/v1/chat/completions';
+    const signal = AbortSignal.any([input.signal, AbortSignal.timeout(target.timeoutMs)]);
+    if (input.onDelta) {
+      let text = '';
+      let truncated = true;
+      for await (const delta of chatDeltas(
+        target.provider,
+        gateway.stream(
+          target,
+          path,
+          chatBody(target, messages, target.maxTokens, undefined, true),
+          signal,
+        ),
+      )) {
+        if ('done' in delta) truncated = delta.truncated;
+        else {
+          text += delta.text;
+          if (text.length > 8000) throw new Error(failed);
+          input.onDelta(delta.text);
+        }
+      }
+      if (truncated || !text) throw new Error(failed);
+      return { text, target };
+    }
+    const response = await gateway.request(
       target,
-      target.provider === 'ollama' ? '/api/chat' : '/v1/chat/completions',
+      path,
       chatBody(target, messages, target.maxTokens),
-      AbortSignal.any([input.signal, AbortSignal.timeout(target.timeoutMs)]),
+      signal,
     );
     const envelope =
       target.provider === 'ollama'
@@ -84,7 +120,6 @@ export const createConversationResponder =
         : 'choices' in envelope && envelope.choices[0]?.finish_reason === 'length';
     const text =
       'message' in envelope ? envelope.message.content : envelope.choices[0]?.message.content;
-    if (truncated || !text || text.length > 8000)
-      throw new Error('Model answer is missing or truncated. Question remains saved.');
+    if (truncated || !text || text.length > 8000) throw new Error(failed);
     return { text, target };
   };

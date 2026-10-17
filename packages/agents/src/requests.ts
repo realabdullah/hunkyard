@@ -6,6 +6,7 @@ export const chatBody = (
   messages: Message[],
   maxTokens: number,
   schema?: Record<string, unknown>,
+  stream = false,
 ): unknown => {
   const mode = schema ? 'schema' : (target.structuredOutput ?? 'json');
   if (target.provider === 'deepseek' && mode === 'schema')
@@ -53,7 +54,7 @@ export const chatBody = (
     return {
       model: target.model,
       messages,
-      stream: false,
+      stream,
       ...(mode === 'text' ? {} : { format: mode === 'schema' ? outputSchema : 'json' }),
       options: {
         num_predict: maxTokens,
@@ -65,7 +66,7 @@ export const chatBody = (
   return {
     model: target.model,
     messages,
-    stream: false,
+    stream,
     ...(target.provider === 'deepseek' ? { thinking: { type: 'disabled' } } : {}),
     ...(target.provider === 'openai'
       ? { store: false, max_completion_tokens: maxTokens }

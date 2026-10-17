@@ -1,4 +1,4 @@
-import { request as httpRequest } from 'node:http';
+import { request as httpRequest, type IncomingMessage } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import { isHostedProvider, type ModelTarget, validateTarget } from '@reviewlab/domain';
 
@@ -8,10 +8,24 @@ export type ModelTransport = (
   signal: AbortSignal,
   key?: string,
 ) => Promise<unknown>;
+/** Streams the raw response body as text; framing is parsed by the caller. */
+export type ModelStreamTransport = (
+  url: URL,
+  body: unknown,
+  signal: AbortSignal,
+  key?: string,
+) => AsyncIterable<string>;
 export { validateTarget } from '@reviewlab/domain';
 
-const requestJson: ModelTransport = (url, body, signal, key) =>
-  new Promise((resolve, reject) => {
+/** Opens one request to the validated destination; redirects and non-2xx answers are refused. */
+const open = (
+  url: URL,
+  body: unknown | undefined,
+  signal: AbortSignal,
+  key: string | undefined,
+  accept: string,
+) =>
+  new Promise<IncomingMessage>((resolve, reject) => {
     const data = body === undefined ? undefined : JSON.stringify(body);
     const request = (url.protocol === 'https:' ? httpsRequest : httpRequest)(
       url,
@@ -20,7 +34,7 @@ const requestJson: ModelTransport = (url, body, signal, key) =>
         signal,
         agent: false,
         headers: {
-          accept: 'application/json',
+          accept,
           ...(data
             ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) }
             : {}),
@@ -34,23 +48,7 @@ const requestJson: ModelTransport = (url, body, signal, key) =>
           reject(new Error(`Model endpoint returned HTTP ${response.statusCode ?? 0}.`));
           return;
         }
-        const chunks: Buffer[] = [];
-        let size = 0;
-        response.on('data', (chunk: Buffer) => {
-          size += chunk.length;
-          if (size > 2 * 1024 * 1024) {
-            response.destroy();
-            reject(new Error('Model response exceeds 2 MiB.'));
-          } else chunks.push(chunk);
-        });
-        response.on('error', () => reject(new Error('Model response interrupted.')));
-        response.on('end', () => {
-          try {
-            resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown);
-          } catch {
-            reject(new Error('Model endpoint returned invalid JSON.'));
-          }
-        });
+        resolve(response);
       },
     );
     request.on('error', () =>
@@ -63,17 +61,54 @@ const requestJson: ModelTransport = (url, body, signal, key) =>
     request.end(data);
   });
 
+const limit = 2 * 1024 * 1024;
+
+/** Reads a response body as UTF-8 text chunks, capped at 2 MiB in total. */
+async function* chunks(response: IncomingMessage, signal: AbortSignal): AsyncGenerator<string> {
+  const decoder = new TextDecoder();
+  let size = 0;
+  try {
+    for await (const chunk of response as AsyncIterable<Buffer>) {
+      size += chunk.length;
+      if (size > limit) throw new Error('Model response exceeds 2 MiB.');
+      yield decoder.decode(chunk, { stream: true });
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('Model response exceeds')) throw error;
+    throw new Error(
+      signal.aborted ? 'Model request cancelled or timed out.' : 'Model response interrupted.',
+    );
+  } finally {
+    response.destroy();
+  }
+}
+
+const requestJson: ModelTransport = async (url, body, signal, key) => {
+  let text = '';
+  for await (const chunk of chunks(await open(url, body, signal, key, 'application/json'), signal))
+    text += chunk;
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    throw new Error('Model endpoint returned invalid JSON.');
+  }
+};
+
+const requestStream: ModelStreamTransport = async function* (url, body, signal, key) {
+  yield* chunks(
+    await open(url, body, signal, key, 'application/x-ndjson, text/event-stream'),
+    signal,
+  );
+};
+
 export type SecretResolver = (target: ModelTarget) => Promise<string | undefined>;
 export const createModelGateway = (
   transport: ModelTransport = requestJson,
   resolveSecret?: SecretResolver,
-) => ({
-  request: async (
-    target: ModelTarget,
-    path: string,
-    body: unknown | undefined,
-    signal: AbortSignal,
-  ): Promise<unknown> => {
+  streamTransport: ModelStreamTransport = requestStream,
+) => {
+  // Every operation, streaming or not, passes the same destination and key checks first.
+  const resolve = async (target: ModelTarget, path: string) => {
     const base = validateTarget(target);
     const allowed =
       target.provider === 'ollama'
@@ -99,6 +134,26 @@ export const createModelGateway = (
         `${environmentKey} is required on the server (environment or saved provider secret).`,
       );
     const operation = target.provider === 'deepseek' ? path.replace(/^\/v1/, '') : path;
-    return transport(new URL(operation, base), body, signal, key);
-  },
-});
+    return { url: new URL(operation, base), key };
+  };
+  return {
+    request: async (
+      target: ModelTarget,
+      path: string,
+      body: unknown | undefined,
+      signal: AbortSignal,
+    ): Promise<unknown> => {
+      const { url, key } = await resolve(target, path);
+      return transport(url, body, signal, key);
+    },
+    stream: async function* (
+      target: ModelTarget,
+      path: '/api/chat' | '/v1/chat/completions',
+      body: unknown,
+      signal: AbortSignal,
+    ): AsyncGenerator<string> {
+      const { url, key } = await resolve(target, path);
+      yield* streamTransport(url, body, signal, key);
+    },
+  };
+};

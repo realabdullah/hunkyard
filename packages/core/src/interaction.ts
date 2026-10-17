@@ -53,7 +53,16 @@ export const createInteractionService = (deps: ReviewServiceDependencies, writab
     if (!found) throw new Error('Run not found in this session.');
     return found;
   };
-  const message = async (id: string, raw: unknown) => {
+  /**
+   * `onDelta` receives a question's answer text live; only the validated whole is saved.
+   * `cancel` lets the caller stop the model call; the question stays saved either way.
+   */
+  const message = async (
+    id: string,
+    raw: unknown,
+    onDelta?: (text: string) => void,
+    cancel?: AbortSignal,
+  ) => {
     const input = MessageRequestSchema.parse(raw);
     if (input.kind === 'question' && pending.size)
       throw new Error(
@@ -106,6 +115,9 @@ export const createInteractionService = (deps: ReviewServiceDependencies, writab
       return { state, entry, session };
     });
     if (input.kind !== 'question') return saved.state;
+    const stop = () => controller.abort();
+    cancel?.addEventListener('abort', stop, { once: true });
+    if (cancel?.aborted) stop();
     try {
       writable();
       if (!deps.respond) throw new Error('Question saved. Model conversations are unavailable.');
@@ -115,6 +127,7 @@ export const createInteractionService = (deps: ReviewServiceDependencies, writab
         message: saved.entry,
         ...(input.model ? { model: input.model } : {}),
         signal: controller.signal,
+        ...(onDelta ? { onDelta } : {}),
       });
       return await serial(async () => {
         writable();
@@ -144,6 +157,7 @@ export const createInteractionService = (deps: ReviewServiceDependencies, writab
         return state;
       });
     } finally {
+      cancel?.removeEventListener('abort', stop);
       pending.delete(controller);
     }
   };
