@@ -13,6 +13,12 @@
       try {
         if (localStorage.getItem('theme') === 'dark') document.documentElement.dataset.theme = 'dark';
       } catch {}
+      // Lay the canvas out before first paint and hold it back until the entrance plays.
+      (function (root) {
+        if (matchMedia('(min-width: 860px)').matches) root.classList.add('canvas');
+        root.classList.add('booting');
+        setTimeout(function () { root.classList.remove('booting'); }, 4000);
+      })(document.documentElement);
     </script>
   </head>
   <body>
@@ -31,6 +37,7 @@
         Hunkyard
       </a>
       <div class="pill pill-tight">
+        <a class="nav-link" href="#guide" data-guide="">Guide</a>
         <button class="icon-btn" type="button" id="theme" aria-label="Switch to dark theme">
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path class="moon" d="M13.5 9.6A5.6 5.6 0 0 1 6.4 2.5a5.6 5.6 0 1 0 7.1 7.1Z" /><g class="sun"><circle cx="8" cy="8" r="2.8" /><path d="M8 1.2v1.6M8 13.2v1.6M1.2 8h1.6M13.2 8h1.6M3.2 3.2l1.1 1.1M11.7 11.7l1.1 1.1M3.2 12.8l1.1-1.1M11.7 4.3l1.1-1.1" /></g></svg>
         </button>
@@ -44,7 +51,7 @@
 
         <!-- Hero -->
         <section class="cluster hero" id="c-hero" data-stop="hero" style="left: 0; top: 0">
-          <p class="kicker mono">Local-first code review · 0.1 release candidate</p>
+          <p class="kicker mono">Local-first code review · v0.1</p>
           <h1 class="serif">Review the diff on a canvas <em>you own.</em></h1>
           <p class="lede">
             Hunkyard freezes your Git changes, sends a crew of reviewers over them on the model
@@ -55,7 +62,7 @@
             <a class="btn btn-ink" href="#c-install" data-go="install">Get started</a>
             <button class="btn btn-line" type="button" data-next>Take the tour <span aria-hidden="true">→</span></button>
           </div>
-          <p class="hint">Drag or scroll to look around. Press <kbd>→</kbd> for the next stop.</p>
+          <p class="hint">Drag or scroll to look around. Press <kbd>→</kbd> for the next stop, or <kbd>G</kbd> to open the <a href="#guide" data-guide="">field guide</a>.</p>
         </section>
 
         <!-- Review demo -->
@@ -65,6 +72,7 @@
             <div>
               <h2 class="serif" id="t-review">A review, <em>laid out.</em></h2>
               <p>Snapshot, crew, findings and fix, connected the way they are in the workspace. Try the underlined words and the cards.</p>
+              <a class="annot-more" href="#guide/findings" data-guide="findings">Read the guide <span aria-hidden="true">→</span></a>
             </div>
           </header>
 
@@ -124,6 +132,7 @@
             <div>
               <h2 class="serif" id="t-privacy">Where your code goes is <em>never a guess.</em></h2>
               <p>Before a review starts, Hunkyard names every destination your source code will reach. Local-only mode is a hard boundary, not a preference.</p>
+              <a class="annot-more" href="#guide/privacy" data-guide="privacy">Read the guide <span aria-hidden="true">→</span></a>
             </div>
           </header>
           <div class="privacy-grid">
@@ -150,6 +159,7 @@
             <div>
               <h2 class="serif" id="t-rules">It reads the rules <em>you already wrote.</em></h2>
               <p>A nested file applies only to its own directory. When a finding relies on one of your rules, it says which one.</p>
+              <a class="annot-more" href="#guide/rules" data-guide="rules">Read the guide <span aria-hidden="true">→</span></a>
             </div>
           </header>
           <div class="node tree" aria-label="Instruction files Hunkyard reads">
@@ -173,6 +183,7 @@
             <div>
               <h2 class="serif" id="t-models">Bring the model. <em>Keep the choice.</em></h2>
               <p>Run reviewers on your own hardware, or opt in to a hosted provider for one repository at a time.</p>
+              <a class="annot-more" href="#guide/models" data-guide="models">Read the guide <span aria-hidden="true">→</span></a>
             </div>
           </header>
           <div class="models-grid">
@@ -203,12 +214,13 @@
             <div>
               <h2 class="serif" id="t-install">Your first review, <em>in three steps.</em></h2>
               <p>You need Node.js 22.22 or later, Git and a model. Hunkyard never stages, commits or pushes.</p>
+              <a class="annot-more" href="#guide/install" data-guide="install">Read the guide <span aria-hidden="true">→</span></a>
             </div>
           </header>
           <ol class="node steps">
             <li>
-              <p>Build the CLI from the repository, then install the packed tarball globally (see the README).</p>
-              <div class="cmd"><pre class="mono">pnpm install --frozen-lockfile &amp;&amp; pnpm package:release</pre><button class="copy" type="button" data-copy="pnpm install --frozen-lockfile &amp;&amp; pnpm package:release">Copy</button></div>
+              <p>Install the CLI from npm.</p>
+              <div class="cmd"><pre class="mono">npm install --global @hunkyard/cli</pre><button class="copy" type="button" data-copy="npm install --global @hunkyard/cli">Copy</button></div>
             </li>
             <li>
               <p>Choose where your reviews run.</p>
@@ -243,6 +255,8 @@
       <button type="button" data-go="rules">Rules</button>
       <button type="button" data-go="models">Models</button>
       <button type="button" data-go="install">Install</button>
+      <span class="dock-rule" aria-hidden="true"></span>
+      <button type="button" data-guide="">Guide</button>
     </nav>
 
     <div class="map" id="map" aria-hidden="true">
@@ -253,6 +267,584 @@
         <button type="button" data-zoom="1" tabindex="-1">+</button>
       </div>
     </div>
+
+    <!-- Field guide: a sheet that rises over the canvas. Opened from the top bar, the dock, G or #guide. -->
+    <dialog class="guide" id="guide" aria-labelledby="g-title">
+      <div class="g-sheet" id="g-sheet" tabindex="-1" autofocus>
+        <header class="g-bar">
+          <p class="g-brand">
+            <svg class="mark" width="18" height="18" viewBox="0 0 26 26" aria-hidden="true">
+              <rect width="26" height="26" rx="7" />
+              <g fill="none" stroke-linecap="round">
+                <circle cx="11.6" cy="11.6" r="6" stroke-width="2" />
+                <path d="M8.9 10.2h3.6M10.4 13h4" stroke-width="1.7" />
+                <path d="m16.2 16.2 3.6 3.6" stroke-width="2.2" />
+              </g>
+            </svg>
+            <span>Field guide</span>
+            <span class="g-where mono" id="g-where" aria-hidden="true"></span>
+          </p>
+          <button class="btn btn-line btn-sm g-close" type="button" id="g-close">Back to the canvas <kbd>Esc</kbd></button>
+          <span class="g-progress" id="g-progress" aria-hidden="true"></span>
+        </header>
+
+        <div class="g-body">
+          <details class="g-toc" id="g-toc">
+            <summary>Contents</summary>
+            <div class="g-filter">
+              <input id="g-filter" type="search" placeholder="Filter chapters" aria-label="Filter chapters" autocomplete="off" spellcheck="false" />
+            </div>
+            <nav aria-label="Guide chapters">
+              <ol id="g-chapters">
+                <li><a href="#guide/install" data-guide="install"><span class="mono">01</span>Install</a></li>
+                <li><a href="#guide/quick-start" data-guide="quick-start"><span class="mono">02</span>Your first review</a></li>
+                <li><a href="#guide/models" data-guide="models"><span class="mono">03</span>Models and providers</a></li>
+                <li><a href="#guide/privacy" data-guide="privacy"><span class="mono">04</span>Privacy and local-only mode</a></li>
+                <li><a href="#guide/scopes" data-guide="scopes"><span class="mono">05</span>What to review</a></li>
+                <li><a href="#guide/profiles" data-guide="profiles"><span class="mono">06</span>Reviewers and profiles</a></li>
+                <li><a href="#guide/workspace" data-guide="workspace"><span class="mono">07</span>The workspace</a></li>
+                <li><a href="#guide/findings" data-guide="findings"><span class="mono">08</span>Triage and discussion</a></li>
+                <li><a href="#guide/fixes" data-guide="fixes"><span class="mono">09</span>Applying fixes</a></li>
+                <li><a href="#guide/rules" data-guide="rules"><span class="mono">10</span>Project rules</a></li>
+                <li><a href="#guide/github" data-guide="github"><span class="mono">11</span>GitHub pull requests</a></li>
+                <li><a href="#guide/vscode" data-guide="vscode"><span class="mono">12</span>VS Code</a></li>
+                <li><a href="#guide/history" data-guide="history"><span class="mono">13</span>History and storage</a></li>
+                <li><a href="#guide/advanced" data-guide="advanced"><span class="mono">14</span>Advanced features</a></li>
+                <li><a href="#guide/cli" data-guide="cli"><span class="mono">15</span>Command reference</a></li>
+                <li><a href="#guide/troubleshooting" data-guide="troubleshooting"><span class="mono">16</span>Troubleshooting</a></li>
+              </ol>
+              <p class="g-empty" id="g-empty" hidden>No chapter mentions that.</p>
+            </nav>
+          </details>
+
+          <article class="g-doc">
+            <section class="g-cover" id="g-top">
+              <p class="kicker mono">Field guide · v0.1</p>
+              <h1 class="serif" id="g-title">Everything Hunkyard does, <em>and how to drive it.</em></h1>
+              <p class="g-lede">
+                Hunkyard is a local-first AI code reviewer for Git. It freezes a snapshot of your changes, runs a crew of
+                specialist reviewers over it on the model you choose, and opens a browser workspace where you triage what
+                they found, talk it through and approve fixes. This guide walks through all of it, end to end.
+              </p>
+              <p class="g-meta mono">16 chapters · about 20 minutes · <kbd>/</kbd> to filter</p>
+              <ol class="g-flow" aria-label="How a review flows">
+                <li><span class="mono">1</span><strong>Snapshot</strong>Your changes, frozen read-only.</li>
+                <li><span class="mono">2</span><strong>Crew</strong>Specialist reviewers on your model.</li>
+                <li><span class="mono">3</span><strong>Findings</strong>Anchored to lines, with evidence.</li>
+                <li><span class="mono">4</span><strong>Decisions</strong>Accept, dismiss, discuss.</li>
+                <li><span class="mono">5</span><strong>Fixes</strong>Applied only when you approve.</li>
+              </ol>
+            </section>
+
+            <!-- 01 -->
+            <section class="g-sec" id="g-install" data-chapter="install" aria-labelledby="h-install">
+              <p class="g-num mono">01</p>
+              <h2 class="serif" id="h-install">Install</h2>
+              <p>You need three things:</p>
+              <ul>
+                <li><strong>Node.js 22.22 or later.</strong> Hunkyard stores history with Node's built-in SQLite. An experimental-feature warning on start is expected.</li>
+                <li><strong>Git.</strong> Hunkyard reads your repository with your own Git install.</li>
+                <li><strong>A model.</strong> A local runtime such as Ollama, LM Studio or llama.cpp, or an API key for a hosted provider.</li>
+              </ul>
+              <p>Install the CLI globally from npm:</p>
+              <div class="cmd"><pre class="mono">npm install --global @hunkyard/cli</pre><button class="copy" type="button" data-copy="npm install --global @hunkyard/cli">Copy</button></div>
+              <p>Or try it once without installing:</p>
+              <div class="cmd"><pre class="mono">npx @hunkyard/cli</pre><button class="copy" type="button" data-copy="npx @hunkyard/cli">Copy</button></div>
+              <p>Check that everything is in place. <code>doctor</code> validates your configuration and asks your model runtime whether the configured model exists. Add <code>--no-probe</code> to skip that request and work fully offline.</p>
+              <div class="cmd"><pre class="mono">hunkyard doctor</pre><button class="copy" type="button" data-copy="hunkyard doctor">Copy</button></div>
+              <p class="g-note">Hunkyard does not download models or start runtimes for you. Install and run them yourself, then point Hunkyard at them.</p>
+              <button class="g-canvas" type="button" data-canvas="install">See it on the canvas <span aria-hidden="true">↗</span></button>
+            </section>
+
+            <!-- 02 -->
+            <section class="g-sec" id="g-quick-start" data-chapter="quick-start" aria-labelledby="h-quick-start">
+              <p class="g-num mono">02</p>
+              <h2 class="serif" id="h-quick-start">Your first review</h2>
+              <p>From zero to triaged findings in four steps. Run every command from inside the Git repository you want to review, or pass <code>--repo /path/to/repo</code>.</p>
+              <ol class="g-steps">
+                <li>
+                  <h3>Point Hunkyard at a model</h3>
+                  <p>With Ollama running and a coding model pulled:</p>
+                  <div class="cmd"><pre class="mono">hunkyard config --provider ollama --endpoint http://127.0.0.1:11434 --model qwen2.5-coder:7b --privacy local-only</pre><button class="copy" type="button" data-copy="hunkyard config --provider ollama --endpoint http://127.0.0.1:11434 --model qwen2.5-coder:7b --privacy local-only">Copy</button></div>
+                </li>
+                <li>
+                  <h3>Stage something</h3>
+                  <p>Stage the changes you want reviewed. Partial staging works: Hunkyard reviews exactly what is in the index, hunk by hunk.</p>
+                  <div class="cmd"><pre class="mono">git add -p</pre><button class="copy" type="button" data-copy="git add -p">Copy</button></div>
+                </li>
+                <li>
+                  <h3>Open the workspace</h3>
+                  <p>This starts a local server on <code>127.0.0.1:4317</code> and opens your browser. It does not start a review or touch your files.</p>
+                  <div class="cmd"><pre class="mono">hunkyard</pre><button class="copy" type="button" data-copy="hunkyard">Copy</button></div>
+                </li>
+                <li>
+                  <h3>Run the review</h3>
+                  <p>The launcher reads like a sentence: <em>Review staged changes with the standard crew on qwen2.5-coder:7b.</em> Click any underlined word to change it. Before you run, it shows exactly where your code will go. Then press <strong>Run review</strong>.</p>
+                </li>
+              </ol>
+              <p>Prefer the terminal? The same review runs without the browser and prints findings with a session ID you can open later:</p>
+              <div class="cmd"><pre class="mono">hunkyard review --staged --profile standard</pre><button class="copy" type="button" data-copy="hunkyard review --staged --profile standard">Copy</button></div>
+              <p class="g-note">Keep the terminal open while you use the workspace. <kbd>Ctrl</kbd> <kbd>C</kbd> stops the server and cancels active work.</p>
+            </section>
+
+            <!-- 03 -->
+            <section class="g-sec" id="g-models" data-chapter="models" aria-labelledby="h-models">
+              <p class="g-num mono">03</p>
+              <h2 class="serif" id="h-models">Models and providers</h2>
+              <p>Hunkyard talks to models over HTTP. Local runtimes are the default; hosted providers are available behind explicit consent.</p>
+              <h3>On your machine</h3>
+              <div class="g-table" role="region" aria-label="Local providers" tabindex="0">
+                <table>
+                  <thead><tr><th>Provider</th><th>Flag</th><th>Default endpoint</th></tr></thead>
+                  <tbody>
+                    <tr><td>Ollama</td><td><code>ollama</code></td><td><code>http://127.0.0.1:11434</code></td></tr>
+                    <tr><td>LM Studio</td><td><code>lm-studio</code></td><td><code>http://127.0.0.1:1234/v1</code></td></tr>
+                    <tr><td>llama.cpp server</td><td><code>llama-cpp</code></td><td><code>http://127.0.0.1:8080/v1</code></td></tr>
+                    <tr><td>Any OpenAI-compatible server</td><td><code>compatible</code></td><td><code>http://127.0.0.1:8080/v1</code></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <pre class="g-code mono">hunkyard config --provider lm-studio --endpoint http://127.0.0.1:1234/v1 --model YOUR_MODEL
+hunkyard doctor</pre>
+              <p>Local endpoints must be a literal loopback address, <code>127.0.0.1</code> or <code>[::1]</code>. Hostnames, LAN addresses and redirects are refused, so a local provider can never quietly reach another machine.</p>
+
+              <h3>Hosted, with consent</h3>
+              <p>OpenAI, DeepSeek and AgentRouter are supported. Each needs cloud mode <em>and</em> consent for the current repository. Put the key in your environment (<code>OPENAI_API_KEY</code>, <code>DEEPSEEK_API_KEY</code> or <code>AGENTROUTER_API_KEY</code>), or store it privately from stdin:</p>
+              <pre class="g-code mono">hunkyard config --provider openai --store-key &lt; /private/path/key-file
+hunkyard config --provider openai --model gpt-4.1-mini --privacy cloud-allowed --allow-cloud</pre>
+              <ul>
+                <li>Never put a key in a command argument, a repository file or a chat. <code>--clear-key</code> removes a stored one.</li>
+                <li>Each environment variable overrides only its own provider. An OpenAI key is never reused for another service.</li>
+                <li>AgentRouter is a gateway: it receives your selected source and forwards it upstream. Choosing a DeepSeek-like model name there does not make it a direct DeepSeek connection.</li>
+                <li>Model IDs are yours to choose. Hunkyard never substitutes or falls back to a different model.</li>
+              </ul>
+
+              <h3>From the workspace</h3>
+              <p>Everything above is also under <strong>Model &amp; privacy</strong> in the workspace. The browser can save a key but never reads it back. <strong>Test saved endpoint</strong> lists available models without sending any source.</p>
+
+              <h3>Tuning</h3>
+              <p><code>config</code> also accepts <code>--temperature</code>, <code>--top-p</code>, <code>--context-window</code>, <code>--max-tokens</code>, <code>--max-review-tokens</code> and <code>--max-concurrency</code>.</p>
+              <p>Structured output decides how reviewers return findings: <code>--structured-output schema</code> (JSON schema), <code>json</code> (JSON mode) or <code>text</code>. If your runtime does not support schemas, use <code>json</code> or <code>text</code>. The <strong>Test structured output</strong> button checks what a model supports with a small synthetic prompt that contains none of your source.</p>
+              <button class="g-canvas" type="button" data-canvas="models">See it on the canvas <span aria-hidden="true">↗</span></button>
+            </section>
+
+            <!-- 04 -->
+            <section class="g-sec" id="g-privacy" data-chapter="privacy" aria-labelledby="h-privacy">
+              <p class="g-num mono">04</p>
+              <h2 class="serif" id="h-privacy">Privacy and local-only mode</h2>
+              <p>Hunkyard names every destination your source code will reach before a review starts. There are two privacy modes, set per repository:</p>
+              <div class="g-table" role="region" aria-label="Privacy modes" tabindex="0">
+                <table>
+                  <thead><tr><th>Mode</th><th>What can be contacted</th></tr></thead>
+                  <tbody>
+                    <tr><td><code>local-only</code></td><td>Loopback addresses only. Every hosted model and GitHub request is blocked before it leaves the process.</td></tr>
+                    <tr><td><code>cloud-allowed</code></td><td>Hosted destinations you have explicitly consented to for this repository, plus GitHub when you pass <code>--allow-github</code>.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <h3>The guarantees</h3>
+              <ul>
+                <li><strong>No silent fallback.</strong> If your local model fails, the review fails. It never switches to the cloud.</li>
+                <li><strong>Consent is exact.</strong> It records the hosted origin you approved. Switching provider, changing a gateway origin or routing one reviewer elsewhere fails until you consent again.</li>
+                <li><strong>Revocable.</strong> <code>hunkyard config --revoke-cloud</code> clears every hosted grant for the repository. Data already sent cannot be recalled.</li>
+                <li><strong>No telemetry.</strong> No analytics, remote search or background calls of any kind.</li>
+                <li><strong>Redaction.</strong> Known secret patterns and private keys are redacted before anything is sent to a model. This catches common formats, not every possible secret.</li>
+              </ul>
+              <h3>Preview every destination</h3>
+              <p>Run <code>plan</code> to see every place a review would send source to, with your current settings and options:</p>
+              <div class="cmd"><pre class="mono">hunkyard plan</pre><button class="copy" type="button" data-copy="hunkyard plan">Copy</button></div>
+              <h3>What stays on disk</h3>
+              <p>Snapshots stored locally keep the original source, secrets included. Protect your account and the <code>.hunkyard</code> folder. <code>--json</code> output and <code>export --include-source</code> also contain source; treat them as sensitive.</p>
+              <button class="g-canvas" type="button" data-canvas="privacy">See it on the canvas <span aria-hidden="true">↗</span></button>
+            </section>
+
+            <!-- 05 -->
+            <section class="g-sec" id="g-scopes" data-chapter="scopes" aria-labelledby="h-scopes">
+              <p class="g-num mono">05</p>
+              <h2 class="serif" id="h-scopes">What to review</h2>
+              <p>Pick one scope per review. In the workspace it is the first underlined word in the launcher; on the command line it is a flag.</p>
+              <div class="g-table" role="region" aria-label="Review scopes" tabindex="0">
+                <table>
+                  <thead><tr><th>Flag</th><th>Reviews</th></tr></thead>
+                  <tbody>
+                    <tr><td><code>--staged</code></td><td>Staged changes against <code>HEAD</code>, exactly as staged</td></tr>
+                    <tr><td><code>--unstaged</code></td><td>Working-tree changes not yet staged</td></tr>
+                    <tr><td><code>--working-tree</code></td><td>All changes against <code>HEAD</code>, staged and unstaged</td></tr>
+                    <tr><td><code>--branch main</code></td><td>Your branch since its merge-base with <code>main</code></td></tr>
+                    <tr><td><code>--from A --to B</code></td><td>The direct difference between two commits</td></tr>
+                    <tr><td><code>--pr 123</code></td><td>A GitHub pull request. Needs the GitHub CLI; see <a href="#guide/github" data-guide="github">GitHub pull requests</a></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <h3>Narrowing it down</h3>
+              <ul>
+                <li><code>--include-untracked</code> adds untracked files to <code>--unstaged</code> or <code>--working-tree</code>.</li>
+                <li><code>--path 'src/**'</code> limits the review to matching paths. Repeat it for several.</li>
+                <li><code>--rename-threshold 1–100</code> sets rename detection. The default is 50.</li>
+              </ul>
+              <h3>The snapshot is frozen</h3>
+              <p>When a review starts, Hunkyard captures a read-only snapshot. Edits or staging after that do not change what was reviewed, and findings stay anchored to the code they were about. Hunkyard never checks out, resets, stashes, stages, commits or fetches.</p>
+              <p class="g-note">In large repositories, prefer <code>--staged</code> or committed scopes. Working-tree scopes scan every tracked file and are not supported in sparse checkouts.</p>
+            </section>
+
+            <!-- 06 -->
+            <section class="g-sec" id="g-profiles" data-chapter="profiles" aria-labelledby="h-profiles">
+              <p class="g-num mono">06</p>
+              <h2 class="serif" id="h-profiles">Reviewers and profiles</h2>
+              <p>A review is run by a crew of specialists, each with its own brief. A profile picks the crew and a token budget.</p>
+              <div class="g-table" role="region" aria-label="Review profiles" tabindex="0">
+                <table>
+                  <thead><tr><th>Profile</th><th>Reviewers</th><th>Token budget</th></tr></thead>
+                  <tbody>
+                    <tr><td><code>quick</code></td><td>Correctness</td><td class="mono">40,000</td></tr>
+                    <tr><td><code>standard</code></td><td>+ Security, frontend and accessibility</td><td class="mono">120,000</td></tr>
+                    <tr><td><code>deep</code></td><td>+ Architecture and performance, testing</td><td class="mono">240,000</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <pre class="g-code mono">hunkyard review --staged --profile quick
+hunkyard review --staged --profile deep --verify</pre>
+              <h3>Options</h3>
+              <ul>
+                <li><code>--verify</code> adds an independent pass that confirms or rejects findings. It cannot add new ones.</li>
+                <li><code>--agent-model security=MODEL</code> routes one reviewer to a different model. Repeat it for others. Routes always inherit the repository's privacy mode, so in local-only mode no route can reach a hosted model.</li>
+                <li><code>--agent-concurrency N</code> runs reviewers in parallel.</li>
+                <li><code>--token-budget N</code> overrides the profile's budget. <code>--max-cost-usd N</code> caps hosted spend; it needs per-reviewer prices in <code>--review-options</code>, because Hunkyard never guesses billing rates.</li>
+                <li><code>--retries 0–2</code> retries transient network failures. <code>--priority interactive|background</code> orders queued reviews.</li>
+              </ul>
+              <p>For advanced routing and prices, pass JSON:</p>
+              <pre class="g-code mono">hunkyard review --staged --profile standard --review-options \
+  '{"agentModels":{"security":{"provider":"lm-studio","endpoint":"http://127.0.0.1:1234","model":"YOUR_MODEL"}}}'</pre>
+              <p class="g-note">A review with no findings is a valid result, not proof that the code has no defects.</p>
+            </section>
+
+            <!-- 07 -->
+            <section class="g-sec" id="g-workspace" data-chapter="workspace" aria-labelledby="h-workspace">
+              <p class="g-num mono">07</p>
+              <h2 class="serif" id="h-workspace">The workspace</h2>
+              <p>Run <code>hunkyard</code> in a repository to open it. Each review becomes a board: a canvas with the snapshot, the crew, the findings and their evidence laid out and connected, the way the review on this page is.</p>
+              <ul>
+                <li><strong>Board and triage views.</strong> Press <kbd>B</kbd> for the canvas, <kbd>T</kbd> for a focused list to work through findings one by one.</li>
+                <li><strong>Diff editor.</strong> Open any changed file side by side or unified, with finding markers on their lines. Press <kbd>Alt</kbd> <kbd>F1</kbd> inside the editor for accessibility help.</li>
+                <li><strong>Context.</strong> Every run shows the related code and the rules it used, plus files left out and why: binary, very large, LFS or excluded.</li>
+                <li><strong>Command palette.</strong> <kbd>⌘</kbd> <kbd>K</kbd> searches reviews and commands.</li>
+              </ul>
+              <h3>Keyboard</h3>
+              <div class="g-keys">
+                <div>
+                  <h4>Everywhere</h4>
+                  <p><span>Search and commands</span><kbd>⌘K</kbd></p>
+                  <p><span>New review</span><kbd>N</kbd></p>
+                  <p><span>Shortcut cheat sheet</span><kbd>?</kbd></p>
+                </div>
+                <div>
+                  <h4>On a board</h4>
+                  <p><span>Board or triage view</span><kbd>B</kbd> <kbd>T</kbd></p>
+                  <p><span>Pan the canvas</span><kbd>Space</kbd> + drag</p>
+                  <p><span>Zoom</span><kbd>⌘</kbd> + scroll</p>
+                  <p><span>Fit everything</span><kbd>0</kbd></p>
+                  <p><span>Close the side panel</span><kbd>Esc</kbd></p>
+                </div>
+                <div>
+                  <h4>Triage</h4>
+                  <p><span>Next or previous finding</span><kbd>J</kbd> <kbd>K</kbd></p>
+                  <p><span>Will fix</span><kbd>A</kbd></p>
+                  <p><span>Mark fixed</span><kbd>F</kbd></p>
+                  <p><span>Investigating</span><kbd>I</kbd></p>
+                  <p><span>Dismiss, then 1–5 for a reason</span><kbd>D</kbd></p>
+                  <p><span>Reopen</span><kbd>U</kbd></p>
+                </div>
+              </div>
+              <h3>Server and access</h3>
+              <ul>
+                <li><code>--port 4318</code> uses another port.</li>
+                <li><code>--no-browser</code> prints a temporary access token instead of opening a browser. Don't share that output.</li>
+                <li>The token is handed to the browser once and kept only in memory, so reloading the page means reconnecting.</li>
+                <li>Only one Hunkyard process can write to a repository at a time. Stop the workspace before running a review from the CLI. Read-only commands such as <code>sessions</code>, <code>doctor</code>, <code>storage</code> and <code>export</code> can run alongside it.</li>
+              </ul>
+              <button class="g-canvas" type="button" data-canvas="review">See it on the canvas <span aria-hidden="true">↗</span></button>
+            </section>
+
+            <!-- 08 -->
+            <section class="g-sec" id="g-findings" data-chapter="findings" aria-labelledby="h-findings">
+              <p class="g-num mono">08</p>
+              <h2 class="serif" id="h-findings">Triage and discussion</h2>
+              <p>Every finding is anchored to lines in the snapshot and carries its evidence: the reviewer that raised it, the model and run that produced it, and the project rule it relied on, if any. Hunkyard validates model output against the snapshot, so a finding cannot point at code that isn't there.</p>
+              <h3>Statuses</h3>
+              <p>Each finding is <strong>open</strong>, <strong>investigating</strong>, <strong>accepted</strong> (will fix), <strong>fixed</strong> or <strong>dismissed</strong>. Filter by severity or search to focus. Every decision is recorded with the finding.</p>
+              <h3>Dismissing</h3>
+              <p>A dismissal needs a reason, so your history means something later:</p>
+              <ol class="g-reasons">
+                <li><kbd>1</kbd> False positive</li>
+                <li><kbd>2</kbd> Preference</li>
+                <li><kbd>3</kbd> Accepted risk</li>
+                <li><kbd>4</kbd> Duplicate</li>
+                <li><kbd>5</kbd> Out of scope</li>
+              </ol>
+              <h3>Threads</h3>
+              <p>Each session and each finding has a conversation thread. Save notes, reply, or ask the configured model a follow-up question; <kbd>⌘</kbd> <kbd>Enter</kbd> sends. Threads stay linked to the original run and snapshot, so they remain accurate after the code moves on.</p>
+              <h3>Learned rules</h3>
+              <p>Dismiss two findings as <em>preference</em> and choose <strong>Suggest a rule from my dismissals</strong>. Hunkyard drafts a session rule so the crew stops flagging that pattern. It applies only after you accept it, and your repository's rule files are never changed.</p>
+              <button class="g-canvas" type="button" data-canvas="review">See it on the canvas <span aria-hidden="true">↗</span></button>
+            </section>
+
+            <!-- 09 -->
+            <section class="g-sec" id="g-fixes" data-chapter="fixes" aria-labelledby="h-fixes">
+              <p class="g-num mono">09</p>
+              <h2 class="serif" id="h-fixes">Applying fixes</h2>
+              <p>Under <strong>Propose and approve a file fix</strong>, edit a changed file yourself or ask the model for a draft. Hunkyard shows the exact change before anything is written. Then choose where it goes:</p>
+              <div class="g-pair">
+                <div>
+                  <h3>Apply to your working file</h3>
+                  <p>Allowed only if the file still matches the reviewed snapshot byte for byte. If you have edited it since, the fix is refused: no fuzzy merge, no staging, no forced overwrite.</p>
+                  <p>A backup is saved as <code>&lt;file&gt;.hunkyard-&lt;id&gt;.bak</code>. Backups can contain secrets, so remove them once you've checked the result.</p>
+                </div>
+                <div>
+                  <h3>Try it in an isolated worktree</h3>
+                  <p>Hunkyard creates a detached worktree under <code>.hunkyard/experiments/&lt;id&gt;</code> and leaves your files alone. Test it there, then remove it:</p>
+                  <pre class="g-code mono">git worktree remove &lt;path&gt;</pre>
+                </div>
+              </div>
+              <p>Each approval applies once. If the file changed after the preview, create a fresh preview and approve that exact content. Hunkyard never runs your tests, commits or pushes.</p>
+            </section>
+
+            <!-- 10 -->
+            <section class="g-sec" id="g-rules" data-chapter="rules" aria-labelledby="h-rules">
+              <p class="g-num mono">10</p>
+              <h2 class="serif" id="h-rules">Project rules</h2>
+              <p>Hunkyard reads the instructions you have already written for other tools, and tells you which ones each finding relied on.</p>
+              <div class="g-table" role="region" aria-label="Instruction files" tabindex="0">
+                <table>
+                  <thead><tr><th>File</th><th>Source key</th><th>Applies to</th></tr></thead>
+                  <tbody>
+                    <tr><td><code>AGENTS.md</code></td><td><code>agents</code></td><td>Its folder and below; root and nested</td></tr>
+                    <tr><td><code>CLAUDE.md</code></td><td><code>claude</code></td><td>Its folder and below; root and nested</td></tr>
+                    <tr><td><code>.github/copilot-instructions.md</code></td><td><code>copilot</code></td><td>Whole repository</td></tr>
+                    <tr><td><code>.cursor/rules/**/*.mdc</code>, <code>.md</code></td><td><code>cursor</code></td><td>By each rule's glob</td></tr>
+                    <tr><td><code>.pr_agent.toml</code></td><td><code>pr-agent</code></td><td><code>pr_reviewer.extra_instructions</code> only</td></tr>
+                    <tr><td><code>.hunkyard/review.md</code></td><td><code>hunkyard</code></td><td>Whole repository</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <h3>Precedence</h3>
+              <p>Later sources win: root files first, then nested files, then project rules, then your global rules. The workspace shows which instructions applied to each file and flags overlaps. Instructions guide the reviewers; they can never change privacy settings or grant permissions.</p>
+              <h3>Project configuration</h3>
+              <p>Add <code>.hunkyard/config.json</code> to tune reviews for everyone on the project:</p>
+              <pre class="g-code mono">{
+  "rules": ["Prefer actionable correctness findings with concrete evidence."],
+  "exclude": ["vendor/**", "**/*.generated.ts"],
+  "instructionSources": ["agents", "claude", "cursor"],
+  "instructionOrder": ["CLAUDE.md", "AGENTS.md"],
+  "contextBytes": 24000
+}</pre>
+              <ul>
+                <li><code>rules</code>: extra review guidance.</li>
+                <li><code>exclude</code>: paths to skip. Supports <code>*</code>, <code>**</code> and <code>?</code>; a trailing <code>/</code> matches a folder.</li>
+                <li><code>instructionSources</code>: which instruction files to read. Defaults to all six.</li>
+                <li><code>instructionOrder</code>: puts the listed files last, so they take precedence.</li>
+                <li><code>contextBytes</code>: how much related code to include, from 1,024 to 100,000. The default is 24,000.</li>
+              </ul>
+              <h3>Related code</h3>
+              <p>Alongside the diff, each review gets related code: imports, referenced symbols and matching test files for JavaScript and TypeScript. Binary, very large, LFS and excluded files are listed with the reason they were left out.</p>
+              <button class="g-canvas" type="button" data-canvas="rules">See it on the canvas <span aria-hidden="true">↗</span></button>
+            </section>
+
+            <!-- 11 -->
+            <section class="g-sec" id="g-github" data-chapter="github" aria-labelledby="h-github">
+              <p class="g-num mono">11</p>
+              <h2 class="serif" id="h-github">GitHub pull requests</h2>
+              <p>Review a pull request locally, with your own model. Hunkyard uses your GitHub CLI session and never stores GitHub credentials.</p>
+              <ol class="g-steps">
+                <li>
+                  <h3>Sign in to the GitHub CLI</h3>
+                  <div class="cmd"><pre class="mono">gh auth login</pre><button class="copy" type="button" data-copy="gh auth login">Copy</button></div>
+                </li>
+                <li>
+                  <h3>Allow GitHub requests</h3>
+                  <p>GitHub access needs cloud mode, even with a local model. Cloud mode on its own does not send source to a hosted model.</p>
+                  <div class="cmd"><pre class="mono">hunkyard config --privacy cloud-allowed</pre><button class="copy" type="button" data-copy="hunkyard config --privacy cloud-allowed">Copy</button></div>
+                </li>
+                <li>
+                  <h3>Review the PR</h3>
+                  <pre class="g-code mono">hunkyard pr review 123 --allow-github
+hunkyard review --pr https://github.com/owner/repo/pull/123 --allow-github --profile standard</pre>
+                </li>
+              </ol>
+              <p>Hunkyard captures the PR's commits, diff, comments and checks into a frozen snapshot. Your files, index and refs are not changed, and saved PR sessions reopen without a network request. Only github.com is supported, and the PR must belong to the checkout's <code>origin</code>.</p>
+              <h3>Refreshing</h3>
+              <p>To pick up new commits on the PR, recapture it as a new revision:</p>
+              <div class="cmd"><pre class="mono">hunkyard rerun --session SESSION_ID --revision N --recapture --allow-github</pre><button class="copy" type="button" data-copy="hunkyard rerun --session SESSION_ID --revision N --recapture --allow-github">Copy</button></div>
+              <h3>Publishing</h3>
+              <p>Select findings in the GitHub panel, check the comment preview, enable GitHub requests and choose <strong>Confirm &amp; publish</strong>. This posts one summary comment. It doesn't approve, request changes or add inline comments, and the CLI never publishes. Existing Qodo comments and checks are shown read-only.</p>
+            </section>
+
+            <!-- 12 -->
+            <section class="g-sec" id="g-vscode" data-chapter="vscode" aria-labelledby="h-vscode">
+              <p class="g-num mono">12</p>
+              <h2 class="serif" id="h-vscode">VS Code</h2>
+              <p>The companion extension runs reviews and shows their findings next to your code. It needs VS Code 1.95 or later and the Hunkyard CLI on your <code>PATH</code>. Build it from the repository root and install the generated <code>.vsix</code> with <strong>Extensions: Install from VSIX</strong>:</p>
+              <div class="cmd"><pre class="mono">pnpm package:vscode</pre><button class="copy" type="button" data-copy="pnpm package:vscode">Copy</button></div>
+              <h3>Commands</h3>
+              <ul>
+                <li><strong>Hunkyard: Review Staged Changes</strong> shows the repository, model and privacy mode, then reviews after you confirm.</li>
+                <li><strong>Hunkyard: Open Local Review History</strong> loads past findings. Each one opens the reviewed source in a read-only view.</li>
+                <li><strong>Hunkyard: Clear Findings View</strong> clears what is loaded.</li>
+              </ul>
+              <h3>Settings</h3>
+              <ul>
+                <li><code>hunkyard.executable</code>: path to the CLI if it isn't on your <code>PATH</code>. On Windows, point it to <code>@hunkyard/cli/cli.mjs</code>.</li>
+                <li><code>hunkyard.nodeExecutable</code>: path to Node.js on Windows.</li>
+              </ul>
+              <p class="g-note">The extension never edits, stages, fixes or publishes code, and your CLI privacy settings apply. The workspace must be trusted; virtual workspaces aren't supported. Errors go to the <strong>Hunkyard</strong> output channel.</p>
+            </section>
+
+            <!-- 13 -->
+            <section class="g-sec" id="g-history" data-chapter="history" aria-labelledby="h-history">
+              <p class="g-num mono">13</p>
+              <h2 class="serif" id="h-history">History and storage</h2>
+              <p>Reviews live in <code>.hunkyard/sqlite/history.db</code> inside the repository. Add <code>.hunkyard/</code> to your <code>.gitignore</code>; Hunkyard does not edit it for you.</p>
+              <p>A session can hold several runs. Each run keeps its snapshot, rules, model settings and context, so old results stay accurate after the code changes. History is kept until you delete it.</p>
+              <div class="g-table" role="region" aria-label="History commands" tabindex="0">
+                <table>
+                  <thead><tr><th>Command</th><th>Does</th></tr></thead>
+                  <tbody>
+                    <tr><td><code>sessions</code></td><td>Lists sessions and their IDs</td></tr>
+                    <tr><td><code>rerun --session ID --revision N</code></td><td>Reviews the same snapshot again with current settings</td></tr>
+                    <tr><td><code>rerun … --recapture</code></td><td>Takes a fresh capture of the same scope</td></tr>
+                    <tr><td><code>storage</code></td><td>Shows what history is using on disk</td></tr>
+                    <tr><td><code>export --session ID</code></td><td>Writes a redacted diagnostic JSON; add <code>--include-source</code> for source</td></tr>
+                    <tr><td><code>delete --session ID --revision N</code></td><td>Deletes one run</td></tr>
+                    <tr><td><code>retain --before DATE --keep-latest N</code></td><td>Prunes old history</td></tr>
+                    <tr><td><code>backup --file PATH</code></td><td>Writes a consistent backup, even during a review</td></tr>
+                    <tr><td><code>restore --file PATH</code></td><td>Restores a backup into an empty history</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <p>If Hunkyard stops during a review, the next start marks that run as cancelled. It never resends source automatically; start a new run to retry.</p>
+              <h3>Backups</h3>
+              <ul>
+                <li>The destination must not exist yet. Backups include frozen source, so keep them somewhere private. Nothing is encrypted or uploaded.</li>
+                <li>Your user config and provider keys are not included; copy them separately if you need them.</li>
+                <li>To restore, stop every Hunkyard process and move the existing <code>.hunkyard/sqlite</code> folder aside first. Restore refuses to overwrite history.</li>
+                <li>Back up before upgrading. Older versions can't open history written by newer ones.</li>
+              </ul>
+            </section>
+
+            <!-- 14 -->
+            <section class="g-sec" id="g-advanced" data-chapter="advanced" aria-labelledby="h-advanced">
+              <p class="g-num mono">14</p>
+              <h2 class="serif" id="h-advanced">Advanced features</h2>
+              <p>All optional and off by default. Ordinary reviews need none of them. Run <code>hunkyard plan</code> first to see what each one changes.</p>
+              <h3>Local semantic context</h3>
+              <p>A local embedding model finds related code that imports and symbol references miss. Up to five matches join the usual context, within the same size limits.</p>
+              <pre class="g-code mono">hunkyard review --staged --semantic-model YOUR_EMBEDDING_MODEL \
+  --semantic-endpoint http://127.0.0.1:11434 --allow-local-embeddings</pre>
+              <p>Redacted excerpts go only to that loopback endpoint and embeddings stay in memory. If the model fails, the review fails; there is no remote fallback.</p>
+              <h3>Shared policies</h3>
+              <p>A policy file packages a profile, rules and exclusions for a team:</p>
+              <pre class="g-code mono">{
+  "version": 1,
+  "name": "Team cancellation review",
+  "rules": ["Check that asynchronous work stops when its owner is disposed."],
+  "exclude": ["private/**"],
+  "review": { "profile": "standard", "concurrency": 2, "tokenBudget": 120000 }
+}</pre>
+              <pre class="g-code mono">hunkyard policy-inspect --file team-review.json
+hunkyard review --staged --policy team-review.json --allow-policy</pre>
+              <p>Policies can't change privacy, model routes or credentials. A copy is saved with each review so reruns use the same policy.</p>
+              <h3>Reviewer workflows</h3>
+              <p>By default the profile decides which reviewers run. A workflow sets their order as a small graph:</p>
+              <pre class="g-code mono">hunkyard review --staged --review-options '{"verify":true,"workflow":{"version":1,"nodes":[
+  {"agent":"correctness"},
+  {"agent":"security","after":["correctness"]},
+  {"agent":"verifier","after":["correctness","security"]}
+]}}'</pre>
+              <ul>
+                <li>One to six unique built-in reviewers, including at least one specialist.</li>
+                <li>No missing or circular dependencies.</li>
+                <li>A <code>verifier</code> comes last, depends on every specialist and needs <code>"verify": true</code>.</li>
+                <li>If a reviewer fails, the ones that depend on it are skipped and the run fails.</li>
+              </ul>
+              <h3>Analytics and presets</h3>
+              <p><code>hunkyard analytics</code> summarises your decisions per reviewer, provider and model: accepted, fixed, false positive, other dismissals and undecided. It runs locally, on demand, and outputs counts only.</p>
+              <p><code>hunkyard presets --file BENCHMARK_JSON</code> suggests a profile from a benchmark report. It never changes your settings. Benchmarks with <code>--live</code> send only synthetic fixture code, never yours.</p>
+              <h3>Plugins</h3>
+              <p>Declarative plugin manifests can add review guidance. Check one with <code>hunkyard policy-lint --file MANIFEST</code>, then pass <code>--plugin MANIFEST</code>. Access to related source needs <code>--allow-plugin-context</code> too. Executable plugins aren't supported.</p>
+            </section>
+
+            <!-- 15 -->
+            <section class="g-sec" id="g-cli" data-chapter="cli" aria-labelledby="h-cli">
+              <p class="g-num mono">15</p>
+              <h2 class="serif" id="h-cli">Command reference</h2>
+              <p>Run <code>hunkyard --help</code> for every option. Most commands take <code>--repo PATH</code> and <code>--json</code>.</p>
+              <div class="g-table" role="region" aria-label="Commands" tabindex="0">
+                <table>
+                  <thead><tr><th>Command</th><th>Does</th></tr></thead>
+                  <tbody>
+                    <tr><td><code>hunkyard</code>, <code>open</code></td><td>Opens the browser workspace</td></tr>
+                    <tr><td><code>review</code></td><td>Runs a review from the terminal</td></tr>
+                    <tr><td><code>pr review N</code></td><td>Reviews a GitHub pull request</td></tr>
+                    <tr><td><code>config</code></td><td>Sets provider, model, privacy, consent and tuning</td></tr>
+                    <tr><td><code>doctor</code></td><td>Checks configuration and model availability</td></tr>
+                    <tr><td><code>plan</code></td><td>Previews every destination a review would reach</td></tr>
+                    <tr><td><code>sessions</code></td><td>Lists past sessions</td></tr>
+                    <tr><td><code>rerun</code></td><td>Reruns or recaptures a session</td></tr>
+                    <tr><td><code>export</code>, <code>delete</code>, <code>retain</code>, <code>storage</code></td><td>Manage history</td></tr>
+                    <tr><td><code>backup</code>, <code>restore</code></td><td>Back up and restore history</td></tr>
+                    <tr><td><code>migrate-history</code></td><td>One-time import of history from very early versions</td></tr>
+                    <tr><td><code>analytics</code>, <code>presets</code></td><td>Decision counts and profile suggestions</td></tr>
+                    <tr><td><code>policy-inspect</code>, <code>policy-lint</code></td><td>Check policy files and plugin manifests</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <p>Exit codes: <code>0</code> success, including reviews with findings; <code>1</code> error; <code>130</code> cancelled.</p>
+              <h3>Where settings live</h3>
+              <p>Your settings are in <code>~/.config/hunkyard/config.json</code>, or the path in <code>HUNKYARD_USER_CONFIG</code>. Stored keys sit beside it in <code>provider-secrets.json</code>, protected by file permissions rather than encryption.</p>
+            </section>
+
+            <!-- 16 -->
+            <section class="g-sec" id="g-troubleshooting" data-chapter="troubleshooting" aria-labelledby="h-troubleshooting">
+              <p class="g-num mono">16</p>
+              <h2 class="serif" id="h-troubleshooting">Troubleshooting</h2>
+              <details class="g-faq">
+                <summary>The local model is unavailable</summary>
+                <p>Start your Ollama, LM Studio or llama.cpp server and check the exact model name with <code>hunkyard doctor</code>. Hunkyard never downloads a model or falls back to a hosted one.</p>
+              </details>
+              <details class="g-faq">
+                <summary>Hosted requests are refused</summary>
+                <p>Hosted review needs both cloud mode and consent for this repository's destination. Grant it on purpose with <code>config --allow-cloud</code>. GitHub consent is separate. Never work around this by disabling local-only mode for a repository that needs it.</p>
+              </details>
+              <details class="g-faq">
+                <summary>The workspace is already running, or the port is busy</summary>
+                <p>Close the existing server first, or use <code>--port 4318</code> for an unrelated repository. Never delete SQLite files to get past a running process.</p>
+              </details>
+              <details class="g-faq">
+                <summary>The connection token expired</summary>
+                <p>Reopen the workspace, or use the token printed by the process that is running now. It's temporary, held in browser memory, and separate from provider keys.</p>
+              </details>
+              <details class="g-faq">
+                <summary>A large review exceeds its budget</summary>
+                <p>Check the coverage and omissions the run reports. Narrow the scope with <code>--path</code>, or raise <code>--token-budget</code> to what your runtime can handle.</p>
+              </details>
+              <details class="g-faq">
+                <summary>A fix is refused with a hash conflict</summary>
+                <p>The file changed after the preview. Create a fresh preview and approve that exact content. Hunkyard never forces or silently restages.</p>
+              </details>
+              <details class="g-faq">
+                <summary>Node can't import SQLite</summary>
+                <p>Use Node.js 22.22 or later. The experimental SQLite warning on start is expected.</p>
+              </details>
+              <details class="g-faq">
+                <summary>Restore refuses existing history</summary>
+                <p>That is intentional. Move the existing <code>.hunkyard/sqlite</code> folder aside, then restore. Backups also need the repository's original path.</p>
+              </details>
+              <p>For support, share a redacted <code>hunkyard export</code> after reading it yourself. Raw exports, backups and model logs can contain source.</p>
+              <p class="g-end"><span class="serif">That's the yard.</span> <button class="g-canvas" type="button" data-canvas="hero">Back to the canvas <span aria-hidden="true">↗</span></button></p>
+            </section>
+          </article>
+        </div>
+      </div>
+    </dialog>
 
     <script type="module" src="/src/main.ts"></script>
   </body>

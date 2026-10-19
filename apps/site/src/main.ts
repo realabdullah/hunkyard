@@ -3,9 +3,10 @@ import '@fontsource/instrument-serif/400-italic.css';
 import '@fontsource-variable/geist';
 import '@fontsource-variable/geist-mono';
 import './styles.css';
-import { createCamera, type Rect } from './camera';
+import { createCamera, easeOutExpo, type Rect, reducedMotion, type View } from './camera';
 import { initDemo } from './demo';
 import { $, $$ } from './dom';
+import { initGuide } from './guide';
 import { initSetup } from './setup';
 
 const viewport = $('#viewport');
@@ -164,7 +165,7 @@ for (const trigger of $$('[data-next]')) {
 }
 
 document.addEventListener('keydown', (event) => {
-  if (!camera.enabled || event.metaKey || event.ctrlKey || event.altKey) return;
+  if (!camera.enabled || guide.isOpen || event.metaKey || event.ctrlKey || event.altKey) return;
   if ((event.target as Element).closest('input, textarea, [role="listbox"], [role="radiogroup"]'))
     return;
   if (event.key === 'ArrowRight') step(1);
@@ -193,25 +194,56 @@ viewport.addEventListener('scroll', () => {
 
 /* ---------- Mode: canvas on wide screens, plain document on narrow ones ---------- */
 
+/** The opening view: the intro left of centre, with the review peeking in from the right. */
+const openingView = (): View => {
+  const hero = clusterRect($('#c-hero'));
+  const z = Math.min(1.15, (viewport.clientHeight - 200) / hero.h);
+  const left = Math.max(56, viewport.clientWidth * 0.07);
+  return {
+    z,
+    x: left - hero.x * z,
+    y: (viewport.clientHeight - hero.h * z) / 2 - hero.y * z + 8,
+  };
+};
+
 const applyMode = () => {
   camera.enable(canvasMode.matches);
   document.documentElement.classList.toggle('canvas', canvasMode.matches);
   if (!canvasMode.matches) return;
   buildMap();
-  const hero = clusterRect($('#c-hero'));
-  // Open on the intro, left of centre, with the review peeking in from the right.
-  const z = Math.min(1.15, (viewport.clientHeight - 200) / hero.h);
-  const left = Math.max(56, viewport.clientWidth * 0.07);
-  camera.set({
-    z,
-    x: left - hero.x * z,
-    y: (viewport.clientHeight - hero.h * z) / 2 - hero.y * z + 8,
-  });
+  camera.set(openingView());
   markDock('hero');
   current = 0;
   requestAnimationFrame(drawLinks);
 };
 canvasMode.addEventListener('change', applyMode);
+
+/* ---------- Entrance: the canvas settles into place instead of snapping ---------- */
+
+const ENTRANCE_MS = 1600;
+const enter = () => {
+  const root = document.documentElement;
+  root.classList.remove('booting');
+  if (reducedMotion()) return;
+  root.classList.add('entering');
+  if (camera.enabled) {
+    // Start a little further out and lower, then settle onto the opening view around the intro.
+    const end = openingView();
+    const hero = clusterRect($('#c-hero'));
+    const cx = hero.x + hero.w / 2;
+    const cy = hero.y + hero.h / 2;
+    const sx = end.x + cx * end.z;
+    const sy = end.y + cy * end.z;
+    const z = end.z * 0.88;
+    camera.set({ z, x: sx - cx * z, y: sy + 36 - cy * z });
+    camera.glide(cx, cy, end.z, sx, sy, { duration: 1400, curve: easeOutExpo });
+  }
+  setTimeout(() => {
+    root.classList.remove('entering');
+    drawLinks();
+  }, ENTRANCE_MS);
+};
+
 addEventListener('resize', () => {
   if (!camera.enabled) return;
   buildMap();
@@ -251,7 +283,12 @@ for (const button of $$<HTMLButtonElement>('[data-copy]')) {
 
 initDemo(drawLinks);
 initSetup();
+const guide = initGuide((stop) => {
+  if (camera.enabled) go(stop);
+  else $(`#c-${stop}`).scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth' });
+});
 document.fonts.ready.then(() => {
   applyMode();
+  enter();
   new ResizeObserver(drawLinks).observe($('#stage'));
 });

@@ -5,7 +5,8 @@ const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 1.6;
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
-const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+export const easeOutExpo = (t: number) => (t === 1 ? 1 : 1 - 2 ** (-10 * t));
+export const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
  * A pan/zoom camera over `world`. Screen = world × z + (x, y).
@@ -37,7 +38,14 @@ export const createCamera = (viewport: HTMLElement, world: HTMLElement, onChange
   };
 
   /** Glides so the world point (cx, cy) lands on screen point (sx, sy) at zoom z. */
-  const glide = (cx: number, cy: number, z: number, sx: number, sy: number) => {
+  const glide = (
+    cx: number,
+    cy: number,
+    z: number,
+    sx: number,
+    sy: number,
+    { duration = 820, curve = ease }: { duration?: number; curve?: (t: number) => number } = {},
+  ) => {
     stop();
     const target = clamp(z, MIN_ZOOM, MAX_ZOOM);
     const from = { cx: (sx - view.x) / view.z, cy: (sy - view.y) / view.z, z: view.z };
@@ -46,10 +54,9 @@ export const createCamera = (viewport: HTMLElement, world: HTMLElement, onChange
       return apply();
     }
     const start = performance.now();
-    const duration = 820;
     viewport.classList.add('moving');
     const step = (now: number) => {
-      const t = ease(Math.min(1, (now - start) / duration));
+      const t = curve(Math.min(1, (now - start) / duration));
       // Interpolate zoom in log space so zooming out and back in feels even.
       const z = Math.exp(Math.log(from.z) + (Math.log(target) - Math.log(from.z)) * t);
       const px = from.cx + (cx - from.cx) * t;
