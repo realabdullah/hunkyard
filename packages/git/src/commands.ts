@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import { realpath } from 'node:fs/promises';
 import { Readable } from 'node:stream';
 
 export type GitRunner = (cwd: string, ...args: string[]) => Promise<string>;
@@ -54,8 +55,10 @@ export const readHead = async (run: GitRunner, root: string): Promise<string | n
     throw error;
   }
 };
-export const getRepoRoot = async (cwd = process.cwd()): Promise<string> =>
-  (await git(cwd, 'rev-parse', '--show-toplevel')).replace(/\n$/, '');
+/** Git prints `C:/...` on Windows; identity checks compare against the native real path. */
+export const canonicalRoot = async (run: GitRunner, cwd: string): Promise<string> =>
+  realpath((await run(cwd, 'rev-parse', '--show-toplevel')).replace(/\n$/, ''));
+export const getRepoRoot = (cwd = process.cwd()): Promise<string> => canonicalRoot(git, cwd);
 export const resolveCommit = async (root: string, ref: string): Promise<string> => {
   try {
     return (await git(root, 'rev-parse', '--verify', '--end-of-options', `${ref}^{commit}`)).trim();

@@ -1,5 +1,12 @@
 import { CaptureRequestSchema, type ReviewSnapshot } from '@hunkyard/domain';
-import { type GitRunner, getRepoRoot, git, readHead, resolveCommit } from './commands';
+import {
+  canonicalRoot,
+  type GitRunner,
+  getRepoRoot,
+  git,
+  readHead,
+  resolveCommit,
+} from './commands';
 import { freezeLocalTree } from './local-tree';
 import { snapshotTrees } from './snapshot';
 
@@ -9,7 +16,7 @@ export { getRepoRoot, runBytes, treeEntries } from './commands';
 export const createStagedCapture =
   (run: GitRunner) =>
   async (cwd: string): Promise<ReviewSnapshot> => {
-    const root = (await run(cwd, 'rev-parse', '--show-toplevel')).replace(/\n$/, '');
+    const root = await canonicalRoot(run, cwd);
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const head = await readHead(run, root);
       const tree = (await run(root, 'write-tree')).trim();

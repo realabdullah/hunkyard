@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { constants } from 'node:fs';
 import { lstat, mkdtemp, open, readlink, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { dirname, join, relative } from 'node:path';
+import { dirname, isAbsolute, join, relative, sep } from 'node:path';
 import { excludedPath } from '@hunkyard/domain';
 import { getRepoRoot, git, resolveCommit, runBytes, treeEntries } from './commands';
 
@@ -13,7 +13,8 @@ const localBlob = async (root: string, path: string): Promise<string | null> => 
   const location = join(root, path);
   try {
     const parent = relative(await realpath(root), await realpath(dirname(location)));
-    if (parent.startsWith('../') || parent === '..')
+    // A different Windows drive yields an absolute relative path.
+    if (parent === '..' || parent.startsWith(`..${sep}`) || isAbsolute(parent))
       throw new Error('Working source escapes repository root.');
     // Internal symlink ancestors also introduce ambiguous paths; refuse them.
     let cursor = root;
@@ -23,14 +24,17 @@ const localBlob = async (root: string, path: string): Promise<string | null> => 
         throw new Error('Working source has a symlink ancestor.');
     }
     const stat = await lstat(location);
-    if (stat.isSymbolicLink())
+    if (stat.isSymbolicLink()) {
+      const target = await readlink(location);
       return (
         await runBytes(root, ['hash-object', '-w', '--stdin', '--no-filters'], {
-          input: Buffer.from(await readlink(location)),
+          // Git for Windows records link text with forward slashes; match it.
+          input: Buffer.from(process.platform === 'win32' ? target.replaceAll('\\', '/') : target),
         })
       )
         .toString()
         .trim();
+    }
     if (!stat.isFile()) throw new Error('Working source is not a regular file.');
     const handle = await open(location, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
     try {

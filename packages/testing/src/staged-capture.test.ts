@@ -144,12 +144,14 @@ test('detached HEAD works and corrupt HEAD is not treated as an unborn repositor
 
 test('linked worktree with spaces and Unicode captures its own index and shared repository identity', async () => {
   await withFixture(async ({ root, git }) => {
-    const worktree = join(root, 'worktree ü ');
+    // Windows strips a trailing space from directory names.
+    const name = process.platform === 'win32' ? 'worktree ü' : 'worktree ü ';
+    const worktree = join(root, name);
     await git('worktree', 'add', '-b', 'fixture-worktree', worktree);
     await writeFile(join(worktree, 'example.ts'), 'worktree staged\n');
     await git('-C', worktree, 'add', 'example.ts');
     const snapshot = await captureStaged(worktree);
-    expect(snapshot.repoRoot.endsWith('worktree ü ')).toBe(true);
+    expect(snapshot.repoRoot.endsWith(name)).toBe(true);
     expect(snapshot.repositoryGitDir).toBe(
       (await git('rev-parse', '--path-format=absolute', '--git-common-dir')).replace(/\n$/, ''),
     );
