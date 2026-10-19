@@ -25,11 +25,11 @@ jobs:
             exit 1
           fi
       - uses: pnpm/action-setup@v4
-      # No dependency cache in release builds.
+      # No dependency cache in release builds. No registry-url either: it writes a
+      # placeholder token that hides OIDC exchange failures behind an E401.
       - uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
-          registry-url: https://registry.npmjs.org
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm typecheck
@@ -42,5 +42,6 @@ jobs:
       # Stage via OIDC (no token). It goes live only after a maintainer runs
       # `npm stage approve` or approves it on npmjs.com with 2FA. Staging needs
       # npm 11.15.0+; npx avoids the bundled npm 10's broken self-upgrade.
-      - run: npx --yes npm@11.21.0 stage publish --provenance --access public
+      # Verbose logging shows why an OIDC token exchange was refused.
+      - run: npx --yes npm@11.21.0 stage publish --provenance --access public --loglevel verbose
         working-directory: dist/release
