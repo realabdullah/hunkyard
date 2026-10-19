@@ -9,12 +9,5 @@
       "@hunkyard/server/*": ["apps/server/src/*.ts"]
     }
   },
-  "include": [
-    "apps/**/*.ts",
-    "apps/**/*.tsx",
-    "packages/**/*.ts",
-    "scripts/**/*.ts",
-    "tests/**/*.ts",
-    "*.config.ts"
-  ]
+  "include": ["apps/**/*.ts", "apps/**/*.tsx", "packages/**/*.ts", "scripts/**/*.ts", "*.config.ts"]
 }

@@ -84,10 +84,9 @@ Requires pnpm 10.
 ```sh
 corepack enable
 pnpm install --frozen-lockfile
-pnpm exec playwright install chromium
 pnpm build
 HUNKYARD_REPO=/path/to/a/repo pnpm dev   # API + UI on http://127.0.0.1:5173
-pnpm check                                # lint, typecheck, tests, build and e2e
+pnpm check                                # lint, typecheck, tests and build
 ```
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org/).

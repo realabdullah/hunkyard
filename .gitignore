@@ -6,9 +6,7 @@ dist
 .hunkyard/snapshots-v2
 .hunkyard/sqlite
 
-# Generated verification artifacts and local credentials
-playwright-report/
-test-results/
+# Local credentials
 .env.*
 !.env.example
 

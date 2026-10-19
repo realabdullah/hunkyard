@@ -30,7 +30,6 @@ jobs:
         with:
           name: release-evidence-${{ matrix.os }}-node${{ matrix.node }}
           path: |
-            test-results/
             dist/release/
             dist/hunkyard-vscode-0.1.1.vsix
       - run: pnpm check:commit
