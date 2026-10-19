@@ -30,8 +30,6 @@ jobs:
         with:
           node-version-file: .node-version
           registry-url: https://registry.npmjs.org
-      # Trusted publishing needs npm 11.5.1+, staged publishing 11.15.0+.
-      - run: npm install --global npm@11.21.0
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm typecheck
@@ -42,6 +40,7 @@ jobs:
       - run: pnpm package:release
       - run: pnpm smoke:release
       # Stage via OIDC (no token). It goes live only after a maintainer runs
-      # `npm stage approve` or approves it on npmjs.com with 2FA.
-      - run: npm stage publish --provenance --access public
+      # `npm stage approve` or approves it on npmjs.com with 2FA. Staging needs
+      # npm 11.15.0+; npx avoids the bundled npm 10's broken self-upgrade.
+      - run: npx --yes npm@11.21.0 stage publish --provenance --access public
         working-directory: dist/release
