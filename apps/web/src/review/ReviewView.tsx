@@ -9,12 +9,15 @@ import { Board } from './Board';
 import { makeStatus, ReviewContext, type ReviewCtx, type Selection, useReview } from './context';
 import { SidePanel } from './panels/SidePanel';
 import { Triage } from './Triage';
+import { Walkthrough } from './Walkthrough';
+
+type Mode = 'board' | 'triage' | 'walk';
 
 export const ReviewView = ({ id }: { id: string }) => {
   const { latest, runs, active, historical, error, reload, chooseRun } = useSession(id);
   const { interaction, reloadInteraction } = useInteraction(active?.id, active?.revision);
   const { events } = useEvents(id, () => void reload());
-  const [mode, setMode] = useStoredState<'board' | 'triage'>('hunkyard.mode', 'board');
+  const [mode, setMode] = useStoredState<Mode>('hunkyard.mode', 'board');
   const [selection, setSelection] = useState<Selection | null>(null);
   const refresh = useCallback(async () => {
     await Promise.all([reload(), reloadInteraction()]);
@@ -22,6 +25,7 @@ export const ReviewView = ({ id }: { id: string }) => {
   useHotkeys({
     b: () => setMode('board'),
     t: () => setMode('triage'),
+    w: () => setMode('walk'),
     escape: () => setSelection(null),
   });
   const ctx = useMemo<ReviewCtx | null>(
@@ -60,9 +64,9 @@ export const ReviewView = ({ id }: { id: string }) => {
       <div className="review">
         <ReviewHeader mode={mode} setMode={setMode} chooseRun={chooseRun} />
         <div className="review-body">
-          {mode === 'board' ? <Board /> : <Triage />}
+          {mode === 'board' ? <Board /> : mode === 'triage' ? <Triage /> : <Walkthrough />}
           {selection && mode === 'board' && <SidePanel />}
-          {selection && mode === 'triage' && selection.kind !== 'finding' && <SidePanel />}
+          {selection && mode !== 'board' && selection.kind !== 'finding' && <SidePanel />}
         </div>
       </div>
     </ReviewContext.Provider>
@@ -74,8 +78,8 @@ const ReviewHeader = ({
   setMode,
   chooseRun,
 }: {
-  mode: 'board' | 'triage';
-  setMode: (mode: 'board' | 'triage') => void;
+  mode: Mode;
+  setMode: (mode: Mode) => void;
   chooseRun: (id: string | null) => void;
 }) => {
   const { session, latest, runs, historical, status, refresh, select } = useReview();
@@ -158,6 +162,7 @@ const ReviewHeader = ({
             options={[
               { id: 'board', label: 'Board', icon: 'board' },
               { id: 'triage', label: 'Triage', icon: 'list' },
+              { id: 'walk', label: 'Walkthrough', icon: 'eye' },
             ]}
           />
           <Button variant="ghost" size="sm" icon="chat" onClick={() => select({ kind: 'chat' })}>

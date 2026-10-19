@@ -20,6 +20,7 @@ import './styles/launch.css';
 import './styles/board.css';
 import './styles/panel.css';
 import './styles/triage.css';
+import './styles/walkthrough.css';
 import './styles/settings.css';
 
 const Shell = () => {

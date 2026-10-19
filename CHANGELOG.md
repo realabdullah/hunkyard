@@ -4,6 +4,10 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+### Added
+
+- Walkthrough mode: read a change yourself in dependency order, mark files read, leave line notes, then approve or request changes with a ready-to-paste message for your coding agent.
+
 ## [0.1.1] - 2026-10-17
 
 ### Changed

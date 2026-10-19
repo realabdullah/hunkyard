@@ -50,10 +50,84 @@ export const StatusRequestSchema = z
     (value) => value.status !== 'dismissed' || value.reason !== undefined,
     'Dismissal requires a reason',
   );
+/** The reviewer's own pass over a frozen snapshot: files read, line notes and the final verdict. */
+export const WalkthroughSchema = z.object({
+  reviewed: z
+    .array(
+      z.object({
+        snapshotId: z.string().uuid(),
+        path: z.string().min(1),
+        at: z.string().datetime(),
+      }),
+    )
+    .default([]),
+  notes: z
+    .array(
+      z.object({
+        id: z.string().uuid(),
+        snapshotId: z.string().uuid(),
+        path: z.string().min(1),
+        side: z.enum(['old', 'new']),
+        /** `null` is a note on the whole file. */
+        line: z.number().int().positive().nullable(),
+        text: z.string().min(1).max(4000),
+        createdAt: z.string().datetime(),
+      }),
+    )
+    .default([]),
+  verdicts: z
+    .array(
+      z.object({
+        id: z.string().uuid(),
+        snapshotId: z.string().uuid(),
+        decision: z.enum(['approve', 'request-changes']),
+        /** The exact text handed to the coding agent. */
+        handoff: z.string().min(1).max(64_000),
+        createdAt: z.string().datetime(),
+      }),
+    )
+    .default([]),
+});
+export type Walkthrough = z.infer<typeof WalkthroughSchema>;
+const revision = z.number().int().nonnegative();
+export const WalkthroughRequestSchema = z.discriminatedUnion('action', [
+  z
+    .object({
+      action: z.literal('review'),
+      revision,
+      snapshotId: z.string().uuid(),
+      path: z.string().min(1).max(4096),
+      reviewed: z.boolean(),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal('note'),
+      revision,
+      snapshotId: z.string().uuid(),
+      path: z.string().min(1).max(4096),
+      side: z.enum(['old', 'new']).default('new'),
+      line: z.number().int().positive().nullable(),
+      text: z.string().trim().min(1).max(4000),
+    })
+    .strict(),
+  z.object({ action: z.literal('remove-note'), revision, noteId: z.string().uuid() }).strict(),
+  z
+    .object({
+      action: z.literal('verdict'),
+      revision,
+      snapshotId: z.string().uuid(),
+      decision: z.enum(['approve', 'request-changes']),
+      handoff: z.string().trim().min(1).max(64_000),
+    })
+    .strict(),
+]);
+export type WalkthroughRequest = z.input<typeof WalkthroughRequestSchema>;
 export const InteractionSchema = z.object({
   version: z.literal(1),
   revision: z.number().int().nonnegative(),
   sessionId: z.string().uuid(),
+  walkthrough: WalkthroughSchema.default({}),
   comparisons: z
     .array(
       z.object({
@@ -114,6 +188,7 @@ export const emptyInteraction = (sessionId: string): Interaction => ({
   version: 1,
   revision: 0,
   sessionId,
+  walkthrough: { reviewed: [], notes: [], verdicts: [] },
   messages: [],
   transitions: [],
   patches: [],

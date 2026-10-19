@@ -342,6 +342,9 @@ export const createApi = (deps: {
       ),
     ),
   );
+  app.post('/api/v1/sessions/:id/walkthrough', async (c) =>
+    c.json(await deps.service.interaction.walkthrough(c.req.param('id'), await c.req.json())),
+  );
   app.post('/api/v1/sessions/:id/findings/:findingId/status', async (c) =>
     c.json(
       await deps.service.interaction.transition(

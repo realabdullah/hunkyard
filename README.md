@@ -11,6 +11,7 @@ Hunkyard takes a read-only snapshot of your changes, reviews it with the model o
 - **Specialist reviewers.** Correctness, security, frontend and accessibility, architecture and performance, and testing, with an optional verification pass.
 - **Project-aware.** Follows the rules in `AGENTS.md`, `CLAUDE.md`, and Copilot, Cursor and Qodo instruction files.
 - **You stay in control.** Hunkyard never stages, commits or pushes. A fix is applied only after you preview and approve it.
+- **Review it yourself.** Walkthrough mode lists a change in reading order, tracks which files you've read and turns your line notes into a message for your coding agent.
 - **Persistent history.** Sessions, findings and decisions are stored locally.
 
 ## Requirements

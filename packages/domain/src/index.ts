@@ -489,7 +489,13 @@ export const SecretRequestSchema = z
   })
   .strict();
 
-export type { FindingStatus, Interaction, MessageRequest } from './interaction';
+export type {
+  FindingStatus,
+  Interaction,
+  MessageRequest,
+  Walkthrough,
+  WalkthroughRequest,
+} from './interaction';
 
 export {
   CitationSchema,
@@ -500,6 +506,8 @@ export {
   MessageRequestSchema,
   ReactionRequestSchema,
   StatusRequestSchema,
+  WalkthroughRequestSchema,
+  WalkthroughSchema,
 } from './interaction';
 export type { PatchProposal } from './patch';
 

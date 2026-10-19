@@ -6,6 +6,7 @@ import {
   PatchDraftRequestSchema,
   ReactionRequestSchema,
   StatusRequestSchema,
+  WalkthroughRequestSchema,
 } from '@hunkyard/domain';
 import { effectiveStatus } from './finding-status';
 import type { InteractionAccess } from './interaction-access';
@@ -53,6 +54,61 @@ export const createInteractionService = (deps: ReviewServiceDependencies, writab
     if (!found) throw new Error('Run not found in this session.');
     return found;
   };
+  const snapshotOf = async (id: string, snapshotId: string) => {
+    const latest = await deps.store.get(id);
+    const sessions = [...(latest ? [latest] : []), ...((await deps.store.runs?.(id)) ?? [])];
+    const found = sessions.find((entry) => entry.snapshot.id === snapshotId)?.snapshot;
+    if (!found) throw new Error('Snapshot not found in this session.');
+    return found;
+  };
+  /** Records the reviewer's own walkthrough: reviewed files, line notes and verdicts. */
+  const walkthrough = (id: string, raw: unknown) =>
+    serial(async () => {
+      writable();
+      const input = WalkthroughRequestSchema.parse(raw);
+      const state = await read(id);
+      check(state, input.revision);
+      const pass = state.walkthrough;
+      const now = new Date().toISOString();
+      if (input.action === 'remove-note') {
+        if (!pass.notes.some((note) => note.id === input.noteId))
+          throw new Error('Note not found.');
+        pass.notes = pass.notes.filter((note) => note.id !== input.noteId);
+      } else {
+        const snapshot = await snapshotOf(id, input.snapshotId);
+        if (input.action !== 'verdict' && !snapshot.files.includes(input.path))
+          throw new Error('File is not part of this snapshot.');
+        if (input.action === 'review') {
+          const same = (entry: { snapshotId: string; path: string }) =>
+            entry.snapshotId === input.snapshotId && entry.path === input.path;
+          const has = pass.reviewed.some(same);
+          if (has === input.reviewed) return state;
+          pass.reviewed = input.reviewed
+            ? [...pass.reviewed, { snapshotId: input.snapshotId, path: input.path, at: now }]
+            : pass.reviewed.filter((entry) => !same(entry));
+        } else if (input.action === 'note') {
+          pass.notes.push({
+            id: globalThis.crypto.randomUUID(),
+            snapshotId: input.snapshotId,
+            path: input.path,
+            side: input.side,
+            line: input.line,
+            text: input.text,
+            createdAt: now,
+          });
+        } else {
+          pass.verdicts.push({
+            id: globalThis.crypto.randomUUID(),
+            snapshotId: input.snapshotId,
+            decision: input.decision,
+            handoff: input.handoff,
+            createdAt: now,
+          });
+        }
+      }
+      await save(state);
+      return state;
+    });
   /**
    * `onDelta` receives a question's answer text live; only the validated whole is saved.
    * `cancel` lets the caller stop the model call; the question stays saved either way.
@@ -195,6 +251,7 @@ export const createInteractionService = (deps: ReviewServiceDependencies, writab
     },
     read,
     message,
+    walkthrough,
     reconcile: createReconciliation(deps, access),
     ...createRemediationService(deps, access),
     transition: (id: string, findingId: string, raw: unknown) =>
