@@ -5,7 +5,6 @@ import { join } from 'node:path';
 import { updateConfig } from '@hunkyard/context';
 import { startServer } from '@hunkyard/server/runtime';
 import { createGitFixture } from '@hunkyard/testing';
-import { createGitHubFixture } from './github';
 import { fixtureStatePath } from './runtime-path';
 
 const fixture = await createGitFixture();
@@ -86,16 +85,12 @@ await updateConfig(fixture.root, {
     maxTokens: 1000,
   },
 });
-const github = await createGitHubFixture(fixture.root);
-const server = await startServer(fixture.root, 4317, { github: github.adapter });
+const server = await startServer(fixture.root, 4317);
 await writeFile(
   fixtureStatePath,
   JSON.stringify({
     token: server.token,
     root: fixture.root,
-    githubRoot: github.root,
-    githubFirst: github.first,
-    githubSecond: github.second,
     configFile: process.env.HUNKYARD_USER_CONFIG,
   }),
   { mode: 0o600 },
@@ -106,7 +101,6 @@ const stop = async () => {
   if (stopping) return;
   stopping = true;
   await server.close();
-  await github.dispose();
   model.closeAllConnections();
   await new Promise<void>((resolve) => model.close(() => resolve()));
   await fixture.dispose();

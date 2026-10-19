@@ -6,10 +6,10 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   retries: 0,
   workers: 1,
-  use: { baseURL: 'http://127.0.0.1:5173', browserName: 'chromium' },
+  // CLI journeys only: the fixture server writes a loopback model config they share.
   webServer: {
-    command: 'pnpm exec concurrently -k \"pnpm exec tsx tests/e2e/server.ts\" \"pnpm dev:web\"',
-    url: 'http://127.0.0.1:5173',
+    command: 'pnpm exec tsx tests/e2e/server.ts',
+    url: 'http://127.0.0.1:4317/api/v1/health',
     reuseExistingServer: false,
   },
 });
