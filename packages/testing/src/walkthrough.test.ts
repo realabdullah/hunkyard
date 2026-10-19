@@ -5,7 +5,7 @@ import { createReviewService } from '@hunkyard/core';
 import type { ModelTarget } from '@hunkyard/domain';
 import { captureSnapshot, captureStaged } from '@hunkyard/git';
 import { createSqliteSessionStore } from '@hunkyard/storage';
-import { expect, test } from 'vitest';
+import { expect, test, vi } from 'vitest';
 import { createGitFixture } from './git-fixture';
 
 const setup = async () => {
@@ -108,5 +108,65 @@ test('walkthrough marks, notes and verdicts persist and stay inside the frozen s
     });
   } finally {
     await f.dispose();
+  }
+});
+
+test('walkthrough-only sessions freeze the snapshot without any model, context or network call', async () => {
+  const fixture = await createGitFixture();
+  const fetch = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network egress'));
+  try {
+    await writeFile(join(fixture.root, 'example.ts'), 'export const value = 2;\n');
+    await fixture.git('add', 'example.ts');
+    const policy = { version: 1 as const, instructions: [], sources: [], exclusions: [] };
+    const modelCall = vi.fn(async () => {
+      throw new Error('model called');
+    });
+    // A hosted target without consent: start() would refuse it, walk() must not care.
+    const target: ModelTarget = {
+      provider: 'openai',
+      model: 'unconfigured',
+      endpoint: 'https://api.openai.com/v1',
+      repository: fixture.root,
+      privacy: 'local-only',
+      cloudConsent: false,
+      timeoutMs: 1000,
+      maxTokens: 1000,
+    };
+    const service = createReviewService({
+      root: fixture.root,
+      store: createSqliteSessionStore(fixture.root),
+      captureStaged,
+      capture: captureSnapshot,
+      loadTarget: async () => target,
+      loadReviewOptions: async () => {
+        throw new Error('review options loaded');
+      },
+      buildContext: modelCall,
+      resolvePolicy: async () => ({
+        ...policy,
+        hash: createHash('sha256').update(JSON.stringify(policy)).digest('hex'),
+      }),
+      agent: { review: modelCall },
+    });
+    await expect(service.start()).rejects.toThrow();
+    const session = await service.walk({ kind: 'staged' });
+    expect(session).toMatchObject({ status: 'completed', walkthroughOnly: true, findings: [] });
+    expect(session.plan).toBeUndefined();
+    expect(session.snapshot.files).toEqual(['example.ts']);
+    await service.execute(session.id);
+    const state = await service.interaction.walkthrough(session.id, {
+      action: 'review',
+      revision: 0,
+      snapshotId: session.snapshot.id,
+      path: 'example.ts',
+      reviewed: true,
+    });
+    expect(state.walkthrough.reviewed.map((entry) => entry.path)).toEqual(['example.ts']);
+    expect((await service.get(session.id))?.walkthroughOnly).toBe(true);
+    expect(modelCall).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+  } finally {
+    fetch.mockRestore();
+    await fixture.dispose();
   }
 });

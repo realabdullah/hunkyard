@@ -197,6 +197,42 @@ export const createReviewService = (deps: ReviewServiceDependencies) => {
         await store.save(session);
         return session;
       }),
+    // Freezes a local snapshot for the developer to read themselves. No context builder, agent or
+    // provider is involved, so this path makes no model or network call in any privacy mode.
+    walk: (request: unknown = {}) =>
+      serial(async (): Promise<ReviewSession> => {
+        writable();
+        const target = await loadTarget(root);
+        const initialPolicy = await resolvePolicy(root);
+        const snapshot = deps.capture
+          ? await deps.capture(root, request, initialPolicy.exclusions)
+          : await captureStaged(root);
+        const policy = await resolvePolicy(
+          root,
+          snapshot.changes
+            .flatMap((change) => [change.oldPath, change.newPath])
+            .filter((path): path is string => path !== null),
+        );
+        const now = new Date().toISOString();
+        const session: ReviewSession = {
+          version: 2,
+          revision: 0,
+          id: globalThis.crypto.randomUUID(),
+          runId: globalThis.crypto.randomUUID(),
+          state: 'interactive',
+          status: 'completed',
+          walkthroughOnly: true,
+          snapshot,
+          target,
+          policy,
+          findings: [],
+          instructions: policy.instructions,
+          createdAt: now,
+          completedAt: now,
+        };
+        await store.save(session);
+        return session;
+      }),
     rerun: (
       id: string,
       revision: number,

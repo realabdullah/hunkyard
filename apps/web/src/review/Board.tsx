@@ -590,6 +590,13 @@ const CardBody = ({ card, finding }: { card: CardBox; finding: Finding | undefin
           <i className="shimmer short" />
           <small>Findings appear here once validated against the diff.</small>
         </div>
+      ) : session.walkthroughOnly ? (
+        <div className="placeholder">
+          <strong>No AI review</strong>
+          <small>
+            You froze this snapshot to read yourself. Rerun it to have the crew review it.
+          </small>
+        </div>
       ) : session.status === 'completed' ? (
         <div className="placeholder is-clean">
           <span className="clean-badge">

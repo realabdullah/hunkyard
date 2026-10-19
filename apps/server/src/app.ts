@@ -225,6 +225,16 @@ export const createApi = (deps: {
     launch(session.id);
     return c.json(session, 202);
   });
+  // Walkthrough-only: freeze the snapshot and return it ready to read; nothing is queued.
+  app.post('/api/v1/sessions/walkthrough', async (c) => {
+    const body = await c.req.text();
+    const value: unknown = body ? JSON.parse(body) : {};
+    const scope =
+      value && typeof value === 'object' && 'scope' in value
+        ? StartReviewSchema.parse(value).scope
+        : CaptureRequestSchema.parse(value);
+    return c.json(await deps.service.walk(scope), 201);
+  });
   const launch = (id: string) => {
     void deps.service.execute(id).catch(async () => {
       console.error(

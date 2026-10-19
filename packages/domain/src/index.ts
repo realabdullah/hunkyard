@@ -373,6 +373,8 @@ export const SessionSchema = z.object({
   revision: z.number().int().nonnegative(),
   runId: z.string().uuid().optional(),
   state: z.enum(['ready', 'reviewing', 'interactive', 'archived']).optional(),
+  /** Frozen for the developer to read in Walkthrough mode; no reviewer ran on this run. */
+  walkthroughOnly: z.literal(true).optional(),
   startedAt: z.string().datetime().optional(),
   context: ContextManifestSchema.optional(),
   status: z.enum(['queued', 'running', 'completed', 'failed', 'cancelled']),

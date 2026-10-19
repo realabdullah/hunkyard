@@ -7,6 +7,7 @@ All notable changes to this project are documented in this file. The format is b
 ### Added
 
 - Walkthrough mode: read a change yourself in dependency order, mark files read, leave line notes, then approve or request changes with a ready-to-paste message for your coding agent.
+- Walkthrough-only sessions: `hunkyard review <scope> --walkthrough` or **Walk through it myself** on Home freezes the snapshot and opens it in Walkthrough mode without running reviewers, so no model is needed and nothing leaves your machine. Rerun one later to add an AI review.
 
 ## [0.1.1] - 2026-10-17
 

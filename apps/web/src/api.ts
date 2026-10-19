@@ -1,4 +1,9 @@
-let token = new URLSearchParams(window.location.hash.slice(1)).get('token') ?? '';
+const launchParams = new URLSearchParams(window.location.hash.slice(1));
+let token = launchParams.get('token') ?? '';
+/** Session the CLI asked to open on first load (`hunkyard review --walkthrough`). */
+export const launchSession = /^[0-9a-f-]{36}$/i.test(launchParams.get('session') ?? '')
+  ? launchParams.get('session')
+  : null;
 if (window.location.hash) window.history.replaceState(null, '', window.location.pathname);
 export const hasToken = () => Boolean(token);
 export const setToken = (value: string) => {

@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { api } from '../api';
+import { api, launchSession } from '../api';
 import { useToast } from '../ui/primitives';
 import { useStoredState } from './hooks';
 
@@ -50,8 +50,14 @@ export const WorkspaceProvider = ({
   const [name, setName] = useState('');
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [busy, setBusy] = useState(false);
-  const [view, setView] = useState<View>({ kind: 'home' });
+  const [view, setView] = useState<View>(() =>
+    launchSession ? { kind: 'review', id: launchSession } : { kind: 'home' },
+  );
   const [tabs, setTabs] = useStoredState<string[]>('hunkyard.tabs', []);
+  useEffect(() => {
+    const id = launchSession;
+    if (id) setTabs((open) => (open.includes(id) ? open : [...open, id].slice(-8)));
+  }, [setTabs]);
   const failures = useRef(0);
   const reload = useCallback(async () => {
     try {

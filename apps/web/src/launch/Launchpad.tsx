@@ -62,6 +62,36 @@ export const Launchpad = () => {
     go({ kind: 'review', id: session.id });
     void reload();
   };
+  const parseScope = () => {
+    const parsed = CaptureRequestSchema.safeParse({
+      kind: source,
+      includeUntracked: ['unstaged', 'working-tree'].includes(source) && untracked,
+      paths: narrow
+        ? paths
+            .split(/[\n,]/)
+            .map((path) => path.trim())
+            .filter(Boolean)
+        : [],
+      ...(source === 'branch' ? { baseRef: base } : source === 'commit-range' ? { from, to } : {}),
+    });
+    if (parsed.success) return parsed.data;
+    toast(parsed.error.issues.map((issue) => issue.message).join('; '), 'error');
+    return null;
+  };
+  // Freezes the scope to read yourself: no crew, no model, nothing leaves this machine.
+  const walk = () => {
+    if (busy || source === 'github') return;
+    const scope = parseScope();
+    if (!scope) return;
+    void act(async () => {
+      opened(
+        await api<ReviewSession>('/sessions/walkthrough', {
+          method: 'POST',
+          body: JSON.stringify({ scope }),
+        }),
+      );
+    });
+  };
   const start = () => {
     if (busy || !plan) return;
     if (source === 'github') {
@@ -80,26 +110,13 @@ export const Launchpad = () => {
       });
       return;
     }
-    const parsed = CaptureRequestSchema.safeParse({
-      kind: source,
-      includeUntracked: ['unstaged', 'working-tree'].includes(source) && untracked,
-      paths: narrow
-        ? paths
-            .split(/[\n,]/)
-            .map((path) => path.trim())
-            .filter(Boolean)
-        : [],
-      ...(source === 'branch' ? { baseRef: base } : source === 'commit-range' ? { from, to } : {}),
-    });
-    if (!parsed.success) {
-      toast(parsed.error.issues.map((issue) => issue.message).join('; '), 'error');
-      return;
-    }
+    const scope = parseScope();
+    if (!scope) return;
     void act(async () => {
       opened(
         await api<ReviewSession>('/sessions', {
           method: 'POST',
-          body: JSON.stringify({ scope: parsed.data, review: plan.options }),
+          body: JSON.stringify({ scope, review: plan.options }),
         }),
       );
     });
@@ -319,6 +336,19 @@ export const Launchpad = () => {
             <Icon name="play" size={14} />
             {startLabel}
             <Kbd>⌘↵</Kbd>
+          </Button>
+          <Button
+            size="lg"
+            disabled={busy || source === 'github'}
+            onClick={walk}
+            title={
+              source === 'github'
+                ? 'Walkthrough reads a local scope'
+                : 'Freeze this scope and read it yourself; no reviewer or model runs'
+            }
+          >
+            <Icon name="eye" size={14} />
+            Walk through it myself
           </Button>
           <span className="launch-hint">
             Nothing touches your files without your say. {crew.length || '…'} reviewer

@@ -45,13 +45,51 @@ const value = (flag: string) => {
   const index = args.indexOf(flag);
   return index >= 0 ? args[index + 1] : undefined;
 };
-const help = `Hunkyard — read-only Git reviews\n\nUsage: hunkyard [command] [options]\nRun hunkyard inside a Git repository to open its browser workspace. Subfolders are detected automatically; --repo PATH overrides the repository. No review starts until requested.\n\nPower users: plan (destination preview/fingerprint) | analytics | policy-inspect --file POLICY | presets --file BENCHMARK_JSON\nReview opt-ins: --policy POLICY --allow-policy | --semantic-model NAME --allow-local-embeddings [--semantic-endpoint LOOPBACK_URL]\nWorkflow: --review-options JSON accepts workflow version 1 (read-only specialist DAG). Omit workflow to disable.\nCommands: backup --file PATH, restore --file PATH, policy-lint --file MANIFEST, doctor, review --staged, sessions, open, config, migrate-history, rerun, export, delete, retain, storage\nGitHub: pr review NUMBER_OR_URL --allow-github | review --pr URL --allow-github (requires cloud-allowed privacy and gh auth login)\nPR refresh: rerun --session UUID --revision N --recapture --allow-github\nScopes: --staged | --unstaged | --working-tree | --branch REF | --from REF --to REF\n        --include-untracked (local scopes), --path GLOB (repeatable), --rename-threshold 1–100\nOptions: --repo PATH, --json, --no-browser (open), --port PORT (open), --no-probe (doctor)\nPlugins: review --plugin MANIFEST (grants snapshot read); --allow-plugin-context grants frozen context\nReview: --profile quick|standard|deep --verify --agent-model AGENT=MODEL (repeatable)\n        --agent-concurrency N --retries 0–2 --priority interactive|background\n        --token-budget N --max-cost-usd N --review-options JSON (routes/prices and advanced options)\nConfig: --provider ollama|openai|deepseek|agentrouter|lm-studio|llama-cpp|compatible --endpoint URL --model NAME --privacy local-only|cloud-allowed\n        --allow-cloud or --revoke-cloud (consent for selected diff, related source context and rules)\nHistory: --session UUID --revision N (rerun/delete), --recapture (rerun), --include-source (export)\nRetention: --before ISO_DATE --keep-latest N\nBudgets: --max-tokens N --max-review-tokens N --context-window N --max-concurrency N\nSampling: --temperature N --top-p N --structured-output json|schema|text\nKeys: config --store-key reads stdin; --clear-key removes stored key. OPENAI_API_KEY, DEEPSEEK_API_KEY and AGENTROUTER_API_KEY override their respective provider storage. No automatic cloud fallback.\n`;
+const help = `Hunkyard — read-only Git reviews\n\nUsage: hunkyard [command] [options]\nRun hunkyard inside a Git repository to open its browser workspace. Subfolders are detected automatically; --repo PATH overrides the repository. No review starts until requested.\n\nPower users: plan (destination preview/fingerprint) | analytics | policy-inspect --file POLICY | presets --file BENCHMARK_JSON\nReview opt-ins: --policy POLICY --allow-policy | --semantic-model NAME --allow-local-embeddings [--semantic-endpoint LOOPBACK_URL]\nWorkflow: --review-options JSON accepts workflow version 1 (read-only specialist DAG). Omit workflow to disable.\nCommands: backup --file PATH, restore --file PATH, policy-lint --file MANIFEST, doctor, review --staged, review --staged --walkthrough (read it yourself, no model), sessions, open, config, migrate-history, rerun, export, delete, retain, storage\nGitHub: pr review NUMBER_OR_URL --allow-github | review --pr URL --allow-github (requires cloud-allowed privacy and gh auth login)\nPR refresh: rerun --session UUID --revision N --recapture --allow-github\nScopes: --staged | --unstaged | --working-tree | --branch REF | --from REF --to REF\n        --include-untracked (local scopes), --path GLOB (repeatable), --rename-threshold 1–100\nOptions: --repo PATH, --json, --no-browser (open), --port PORT (open), --no-probe (doctor)\nPlugins: review --plugin MANIFEST (grants snapshot read); --allow-plugin-context grants frozen context\nReview: --profile quick|standard|deep --verify --agent-model AGENT=MODEL (repeatable)\n        --agent-concurrency N --retries 0–2 --priority interactive|background\n        --token-budget N --max-cost-usd N --review-options JSON (routes/prices and advanced options)\nConfig: --provider ollama|openai|deepseek|agentrouter|lm-studio|llama-cpp|compatible --endpoint URL --model NAME --privacy local-only|cloud-allowed\n        --allow-cloud or --revoke-cloud (consent for selected diff, related source context and rules)\nHistory: --session UUID --revision N (rerun/delete), --recapture (rerun), --include-source (export)\nRetention: --before ISO_DATE --keep-latest N\nBudgets: --max-tokens N --max-review-tokens N --context-window N --max-concurrency N\nSampling: --temperature N --top-p N --structured-output json|schema|text\nKeys: config --store-key reads stdin; --clear-key removes stored key. OPENAI_API_KEY, DEEPSEEK_API_KEY and AGENTROUTER_API_KEY override their respective provider storage. No automatic cloud fallback.\n`;
+// Serves the workspace until Ctrl+C; sessionId opens that session's tab on first load.
+const openWorkspace = async (root: string, sessionId?: string) => {
+  const port = Number(value('--port') ?? 4317);
+  if (!Number.isInteger(port) || port < 1024 || port > 65535)
+    throw new Error('Port must be an integer from 1024 to 65535.');
+  const server = await startServer(root, port);
+  const url = `${server.origin}/#token=${server.token}${sessionId ? `&session=${sessionId}` : ''}`;
+  if (has('--no-browser')) {
+    // Explicit interactive credential delivery; never includes a provider key.
+    console.log(
+      `Workspace: ${server.origin}\nAPI connection token (this process only): ${server.token}`,
+    );
+  } else {
+    const launcher =
+      process.platform === 'darwin'
+        ? 'open'
+        : process.platform === 'win32'
+          ? 'rundll32'
+          : 'xdg-open';
+    const launchArgs = process.platform === 'win32' ? ['url.dll,FileProtocolHandler', url] : [url];
+    try {
+      await new Promise<void>((resolve, reject) =>
+        execFile(launcher, launchArgs, (error) => (error ? reject(error) : resolve())),
+      );
+    } catch (error) {
+      await server.close();
+      throw error;
+    }
+    console.log(`Opened Hunkyard at ${server.origin}. Keep this process running; Ctrl+C stops it.`);
+  }
+  const stop = async () => {
+    await server.close();
+    process.exit(0);
+  };
+  process.once('SIGINT', () => void stop());
+  process.once('SIGTERM', () => void stop());
+};
 const main = async () => {
   if (has('--help')) {
     console.log(help);
     return;
   }
   const allowed = new Set([
+    '--walkthrough',
     '--allow-policy',
     '--allow-local-embeddings',
     '--expected-plan',
@@ -406,6 +444,8 @@ const main = async () => {
         throw new Error(
           'Choose exactly one review scope: --staged, --unstaged, --working-tree, --branch REF, --from REF --to REF, or --pr NUMBER_OR_URL.',
         );
+      if (has('--walkthrough') && (command !== 'review' || has('--pr')))
+        throw new Error('--walkthrough freezes a local scope; it does not apply to rerun or --pr.');
       if (has('--pr') && !has('--allow-github'))
         throw new Error('PR capture requires explicit --allow-github consent.');
       if (has('--pr') && ['--path', '--include-untracked', '--rename-threshold', '--to'].some(has))
@@ -430,6 +470,16 @@ const main = async () => {
           ? { renameThreshold: Number(value('--rename-threshold')) }
           : {}),
       });
+      if (has('--walkthrough')) {
+        // No model is validated, probed or called: the snapshot is only frozen for reading.
+        const session = await runtime.service.walk(capture);
+        if (has('--json')) return console.log(JSON.stringify(session, null, 2));
+        console.log(
+          `Froze ${session.snapshot.files.length} files for walkthrough; no reviewer ran.\nSession ${session.id}`,
+        );
+        await runtime.close();
+        return openWorkspace(root, session.id);
+      }
       validateTarget(await loadTarget(root));
       const selectedTarget = await loadTarget(root);
       if (!has('--json'))
@@ -509,46 +559,7 @@ const main = async () => {
       if (result?.status === 'cancelled') process.exitCode = 130;
       return;
     }
-    if (command === 'open') {
-      const port = Number(value('--port') ?? 4317);
-      if (!Number.isInteger(port) || port < 1024 || port > 65535)
-        throw new Error('Port must be an integer from 1024 to 65535.');
-      const server = await startServer(root, port);
-      const url = `${server.origin}/#token=${server.token}`;
-      if (has('--no-browser')) {
-        // Explicit interactive credential delivery; never includes a provider key.
-        console.log(
-          `Workspace: ${server.origin}\nAPI connection token (this process only): ${server.token}`,
-        );
-      } else {
-        const launcher =
-          process.platform === 'darwin'
-            ? 'open'
-            : process.platform === 'win32'
-              ? 'rundll32'
-              : 'xdg-open';
-        const launchArgs =
-          process.platform === 'win32' ? ['url.dll,FileProtocolHandler', url] : [url];
-        try {
-          await new Promise<void>((resolve, reject) =>
-            execFile(launcher, launchArgs, (error) => (error ? reject(error) : resolve())),
-          );
-        } catch (error) {
-          await server.close();
-          throw error;
-        }
-        console.log(
-          `Opened Hunkyard at ${server.origin}. Keep this process running; Ctrl+C stops it.`,
-        );
-      }
-      const stop = async () => {
-        await server.close();
-        process.exit(0);
-      };
-      process.once('SIGINT', () => void stop());
-      process.once('SIGTERM', () => void stop());
-      return;
-    }
+    if (command === 'open') return openWorkspace(root);
     throw new Error(`Unknown command: ${command}\n${help}`);
   } finally {
     await runtime?.close();

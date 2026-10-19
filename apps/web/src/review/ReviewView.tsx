@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../api';
 import { useEvents, useHotkeys, useInteraction, useSession, useStoredState } from '../lib/hooks';
 import { isLive, runIdOf, scopeMeta, sessionTitle, shortSha, statusMeta } from '../lib/meta';
@@ -19,6 +19,11 @@ export const ReviewView = ({ id }: { id: string }) => {
   const { events } = useEvents(id, () => void reload());
   const [mode, setMode] = useStoredState<Mode>('hunkyard.mode', 'board');
   const [selection, setSelection] = useState<Selection | null>(null);
+  // A walkthrough-only run has no findings to triage, so it always opens on the reading path.
+  const walkOnly = active?.walkthroughOnly === true;
+  useEffect(() => {
+    if (walkOnly) setMode('walk');
+  }, [walkOnly, setMode]);
   const refresh = useCallback(async () => {
     await Promise.all([reload(), reloadInteraction()]);
   }, [reload, reloadInteraction]);
