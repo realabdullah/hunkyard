@@ -1,10 +1,16 @@
+import * as fs from 'node:fs/promises';
 import { chmod, mkdir, readFile, rename, symlink, unlink, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, sep } from 'node:path';
 import { CaptureRequestSchema, changedLines } from '@hunkyard/domain';
 import { captureSnapshot } from '@hunkyard/git';
 import { validateSnapshot } from '@hunkyard/storage';
-import { expect, test } from 'vitest';
+import { expect, test, vi } from 'vitest';
 import { createGitFixture } from './git-fixture';
+
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs/promises')>();
+  return { ...actual, open: vi.fn(actual.open) };
+});
 
 const fixtureTest = (
   name: string,
@@ -215,22 +221,22 @@ test('scope/path schemas refuse traversal, remote scopes, and implicit untracked
 fixtureTest(
   'working capture refuses repeated live mutations instead of assembling mixed versions',
   async ({ root }) => {
-    let running = true;
+    // Edit the file each time capture opens it, so no two reads agree regardless of timing.
+    const openMock = vi.mocked(fs.open);
+    const actual = await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises');
     let generation = 0;
-    const mutate = async () => {
-      while (running) {
+    openMock.mockImplementation(async (path, ...rest) => {
+      if (String(path).endsWith(`${sep}example.ts`))
         await writeFile(join(root, 'example.ts'), `export const generation = ${generation++};\n`);
-        await new Promise<void>((resolve) => setTimeout(resolve, 4));
-      }
-    };
-    const mutation = mutate();
+      return actual.open(path, ...rest);
+    });
     try {
       await expect(captureSnapshot(root, { kind: 'working-tree' })).rejects.toThrow(
         'changed repeatedly',
       );
+      expect(generation).toBeGreaterThan(1);
     } finally {
-      running = false;
-      await mutation;
+      openMock.mockImplementation(actual.open);
     }
   },
 );
