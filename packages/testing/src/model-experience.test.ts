@@ -172,9 +172,12 @@ test('provider secrets are private, separate, removable and refused inside repo 
     await saveProviderSecret(root, 'openai', 'fixture-secret');
     expect(await loadProviderSecret(root, 'openai')).toBe('fixture-secret');
     expect(await readFile(providerSecretPath(), 'utf8')).toBe('{"openai":"fixture-secret"}');
-    await chmod(providerSecretPath(), 0o644);
-    await expect(loadProviderSecret(root, 'openai')).rejects.toThrow('private permissions');
-    await chmod(providerSecretPath(), 0o600);
+    // Windows has no POSIX mode bits; the user profile ACL keeps the file private there.
+    if (process.platform !== 'win32') {
+      await chmod(providerSecretPath(), 0o644);
+      await expect(loadProviderSecret(root, 'openai')).rejects.toThrow('private permissions');
+      await chmod(providerSecretPath(), 0o600);
+    }
     await saveProviderSecret(root, 'openai', null);
     expect(await loadProviderSecret(root, 'openai')).toBeUndefined();
     process.env.HUNKYARD_USER_CONFIG = join(root, 'config.json');

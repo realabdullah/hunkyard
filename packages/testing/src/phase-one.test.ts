@@ -110,7 +110,8 @@ test('source anchoring rejects invented/context/binary lines and accepts deletio
       expect(() => validateFindings(snapshot, [finding])).toThrow();
     const deletion = { ...draft, side: 'old' as const, evidence: 'value = 1' };
     expect(validateFindings(snapshot, [deletion])).toHaveLength(1);
-    const name = 'ü\tname.ts';
+    // Windows filenames cannot contain a tab.
+    const name = process.platform === 'win32' ? 'ü name.ts' : 'ü\tname.ts';
     await writeFile(join(root, name), 'new content\n');
     await git('add', name);
     const unusual = await captureStaged(root);

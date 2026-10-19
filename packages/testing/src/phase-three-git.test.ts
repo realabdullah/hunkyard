@@ -156,7 +156,8 @@ fixtureTest(
     await git('commit', '-m', 'test: executable');
     await chmod(join(root, 'script.sh'), 0o755);
     await unlink(join(root, 'example.ts'));
-    await symlink('/outside/private/data', join(root, 'link'));
+    // Relative, because Windows rewrites a rooted target onto the current drive.
+    await symlink('../outside/private/data', join(root, 'link'));
     const oddPath = process.platform === 'win32' ? 'literal ü spaces.ts' : ':(glob)* ü\t\n.ts';
     await writeFile(join(root, oddPath), 'literal path\n');
     const snapshot = await captureSnapshot(root, { kind: 'working-tree', includeUntracked: true });
@@ -169,7 +170,7 @@ fixtureTest(
         expect.objectContaining({ newPath: 'link', newMode: '120000' }),
       ]),
     );
-    expect(source(snapshot, 'new', 'link')).toBe('/outside/private/data');
+    expect(source(snapshot, 'new', 'link')).toBe('../outside/private/data');
     expect(snapshot.files).toContain(oddPath);
     validateSnapshot(snapshot);
   },
