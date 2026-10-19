@@ -1,48 +1,48 @@
 # Hunkyard
 
-Local-first AI code review for Git. Hunkyard captures a frozen snapshot of your changes, runs specialist reviewers against it with the model you choose, and gives you a browser workspace to triage findings, discuss them and approve fixes.
+Local-first AI code review for Git.
 
-- **Local by default.** Works with Ollama, LM Studio, llama.cpp or any OpenAI-compatible server on your machine. Hosted providers (OpenAI, DeepSeek, AgentRouter) need explicit per-repository consent, and there is never a silent cloud fallback.
-- **Any Git scope.** Review staged changes (including partial staging), unstaged or working-tree changes, a branch, a commit range or a GitHub pull request.
-- **Specialist reviewers.** Correctness, security, frontend/accessibility, architecture/performance and testing, with an optional verifier pass.
-- **Respects your project's instructions.** Reads `AGENTS.md`, `CLAUDE.md`, Copilot, Cursor and Qodo rules alongside Hunkyard's own config.
-- **Nothing changes without you.** Hunkyard never stages, commits or pushes. Fixes are applied only after you preview and approve the exact change.
-- **Persistent history.** Sessions, runs and decisions are stored locally in SQLite and survive restarts.
+Hunkyard takes a read-only snapshot of your changes, reviews it with the model of your choice, and opens a browser workspace where you triage findings, discuss them and approve fixes.
+
+## Features
+
+- **Local by default.** Runs against Ollama, LM Studio, llama.cpp or any OpenAI-compatible server. Hosted providers (OpenAI, DeepSeek, AgentRouter) require explicit per-repository consent. There is no automatic cloud fallback.
+- **Any Git scope.** Staged changes (including partial staging), unstaged or working-tree changes, a branch, a commit range or a GitHub pull request.
+- **Specialist reviewers.** Correctness, security, frontend and accessibility, architecture and performance, and testing, with an optional verification pass.
+- **Project-aware.** Follows the rules in `AGENTS.md`, `CLAUDE.md`, and Copilot, Cursor and Qodo instruction files.
+- **You stay in control.** Hunkyard never stages, commits or pushes. A fix is applied only after you preview and approve it.
+- **Persistent history.** Sessions, findings and decisions are stored locally.
 
 ## Requirements
 
-- Node.js 22.22 or later (22 and 24 LTS are tested)
+- Node.js 22.22 or later
 - Git
-- A model: a local runtime such as [Ollama](https://ollama.com), or an API key for a hosted provider
+- A local model runtime such as [Ollama](https://ollama.com), or an API key for a hosted provider
 
-## Install
+## Installation
 
 ```sh
 npm install --global @hunkyard/cli
 ```
 
-Or run it once without installing: `npx @hunkyard/cli`.
-
 ## Usage
 
-Point Hunkyard at a local model (Ollama here; use a model you have installed):
+Configure a model and check the setup:
 
 ```sh
 hunkyard config --provider ollama --endpoint http://127.0.0.1:11434 --model qwen2.5-coder:7b --privacy local-only
 hunkyard doctor
 ```
 
-For LM Studio, llama.cpp or another OpenAI-compatible server, use `--provider lm-studio`, `llama-cpp` or `compatible` with its `--endpoint` (for example `http://127.0.0.1:1234/v1` or `http://127.0.0.1:8080/v1`). Hosted models are covered below.
+Other local providers are `lm-studio`, `llama-cpp` and `compatible`, each with its own `--endpoint`.
 
-Then, from any Git project:
+Open the review workspace from inside a Git repository:
 
 ```sh
 hunkyard
 ```
 
-This opens the browser workspace. Pick a scope and start a review. Keep the terminal open, and press Ctrl+C to stop.
-
-You can also review from the command line:
+Or review from the command line:
 
 ```sh
 hunkyard review --staged
@@ -52,45 +52,38 @@ hunkyard sessions
 
 Run `hunkyard --help` for all commands and options.
 
-### Hosted models
+### Hosted providers
 
-Set the provider's API key in your environment (`OPENAI_API_KEY`, `DEEPSEEK_API_KEY` or `AGENTROUTER_API_KEY`), then allow cloud use for this repository:
+Set `OPENAI_API_KEY`, `DEEPSEEK_API_KEY` or `AGENTROUTER_API_KEY`, then grant consent for the repository:
 
 ```sh
-hunkyard config --provider deepseek --model deepseek-flash --privacy cloud-allowed --allow-cloud
+hunkyard config --provider deepseek --model <model> --privacy cloud-allowed --allow-cloud
 ```
 
-Revoke it any time with `hunkyard config --revoke-cloud`.
+Revoke consent with `hunkyard config --revoke-cloud`.
 
 ### GitHub pull requests
 
-With the GitHub CLI signed in (`gh auth login`):
+Requires the [GitHub CLI](https://cli.github.com) (`gh auth login`) and `cloud-allowed` privacy:
 
 ```sh
-hunkyard config --privacy cloud-allowed
 hunkyard pr review 123 --allow-github
 ```
 
-Publishing a summary comment back to the PR is a separate, confirmed step in the workspace.
-
 ### VS Code
 
-See the [extension README](https://github.com/realabdullah/hunkyard/blob/main/apps/vscode/README.md).
+A companion extension is available in [`apps/vscode`](apps/vscode/README.md).
 
 ## Development
 
 Requires pnpm 10.
 
 ```sh
-corepack enable
-pnpm install --frozen-lockfile
+pnpm install
 pnpm build
-HUNKYARD_REPO=/path/to/a/repo pnpm dev   # API + UI on http://127.0.0.1:5173
-pnpm check                                # lint, typecheck, tests and build
+pnpm check
 ```
-
-Commits follow [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## License
 
-MIT
+[MIT](LICENSE)
