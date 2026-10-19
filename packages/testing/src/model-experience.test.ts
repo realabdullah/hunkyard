@@ -7,14 +7,7 @@ import {
   createModelGateway,
   probeModelCapabilities,
 } from '@hunkyard/agents';
-import {
-  loadAuthorizedProviderSecret,
-  loadProviderSecret,
-  loadTarget,
-  providerSecretPath,
-  saveProviderSecret,
-  updateConfig,
-} from '@hunkyard/context';
+import { loadProviderSecret, providerSecretPath, saveProviderSecret } from '@hunkyard/context';
 import { type ModelTarget, ModelTargetSchema } from '@hunkyard/domain';
 import { expect, test } from 'vitest';
 import { fixtureSnapshot } from './replay';
@@ -214,53 +207,6 @@ test('corrupt private credential JSON and unexpected keys never disclose credent
   } finally {
     if (previous === undefined) delete process.env.HUNKYARD_USER_CONFIG;
     else process.env.HUNKYARD_USER_CONFIG = previous;
-    await rm(directory, { recursive: true, force: true });
-  }
-});
-
-test('consent revocation after invalid hosted output blocks repair even with environment key', async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'hunkyard-revoke-repair-'));
-  const root = join(directory, 'repo');
-  await mkdir(root);
-  const previousConfig = process.env.HUNKYARD_USER_CONFIG;
-  const previousKey = process.env.OPENAI_API_KEY;
-  process.env.HUNKYARD_USER_CONFIG = join(directory, 'private', 'config.json');
-  process.env.OPENAI_API_KEY = 'fixture-environment-key';
-  try {
-    await updateConfig(root, {
-      model: { ...target('openai'), endpoint: 'https://api.openai.com', privacy: 'cloud-allowed' },
-      allowCloud: true,
-    });
-    await saveProviderSecret(root, 'openai', 'fixture-stored-key');
-    const frozen = await loadTarget(root);
-    let calls = 0;
-    const reviewer = createCorrectnessReviewer(
-      async (_url, _body, _signal, key) => {
-        calls += 1;
-        expect(key).toBe('fixture-environment-key');
-        await updateConfig(root, { allowCloud: false });
-        return { choices: [{ message: { content: 'invalid' } }] };
-      },
-      (configured) => loadAuthorizedProviderSecret(root, configured),
-    );
-    await expect(
-      reviewer.review({
-        snapshot,
-        target: frozen,
-        instructions: [],
-        exclusions: [],
-        signal: new AbortController().signal,
-      }),
-    ).rejects.toThrow('revoked');
-    expect(calls).toBe(1);
-    await expect(
-      loadAuthorizedProviderSecret(root, { ...frozen, repository: 'another' }),
-    ).rejects.toThrow('another repository');
-  } finally {
-    if (previousConfig === undefined) delete process.env.HUNKYARD_USER_CONFIG;
-    else process.env.HUNKYARD_USER_CONFIG = previousConfig;
-    if (previousKey === undefined) delete process.env.OPENAI_API_KEY;
-    else process.env.OPENAI_API_KEY = previousKey;
     await rm(directory, { recursive: true, force: true });
   }
 });

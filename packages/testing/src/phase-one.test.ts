@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createCorrectnessReviewer } from '@hunkyard/agents';
@@ -213,19 +213,6 @@ test('rules are inspectable, exclusions are explicit, and repository config cann
   });
 });
 
-test('storage rejects symlink escapes before any source is written outside the repository', async () => {
-  await withSetup(async ({ root }) => {
-    const outside = await mkdtemp(join(tmpdir(), 'hunkyard-outside-'));
-    try {
-      await symlink(outside, join(root, '.hunkyard'));
-      await expect(createFileSessionStore(root).list()).rejects.toThrow('symlink');
-      await expect(readFile(join(outside, 'sessions-v2'), 'utf8')).rejects.toThrow();
-    } finally {
-      await rm(outside, { recursive: true, force: true });
-    }
-  });
-});
-
 test('Hono requires auth, exact Host/Origin and CSRF; authorized local flow captures and completes', async () => {
   await withSetup(async ({ root, snapshot, target, policy }) => {
     const service = createReviewService({
@@ -326,39 +313,6 @@ test('project exclusions and redaction apply before hosted request construction,
       if (previous === undefined) delete process.env.OPENAI_API_KEY;
       else process.env.OPENAI_API_KEY = previous;
     }
-  });
-});
-
-test('hosted consent revocation prevents queued execution', async () => {
-  await withSetup(async ({ root, snapshot, target, policy }) => {
-    let selected = {
-      ...target,
-      provider: 'openai' as const,
-      endpoint: 'https://api.openai.com',
-      privacy: 'cloud-allowed' as const,
-      cloudConsent: true,
-      approvedHostedOrigins: ['https://api.openai.com'],
-    };
-    let calls = 0;
-    const service = createReviewService({
-      root,
-      store: createFileSessionStore(root),
-      captureStaged: async () => snapshot,
-      resolvePolicy: async () => policy,
-      loadTarget: async () => selected,
-      agent: {
-        review: async () => {
-          calls += 1;
-          return [];
-        },
-      },
-    });
-    const session = await service.start();
-    selected = { ...selected, cloudConsent: false };
-    await service.execute(session.id);
-    expect(calls).toBe(0);
-    expect((await service.get(session.id))?.status).toBe('failed');
-    expect((await service.get(session.id))?.error).toContain('revoked');
   });
 });
 

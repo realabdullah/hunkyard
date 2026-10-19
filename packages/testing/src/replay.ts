@@ -1,51 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { ReviewAgent } from '@hunkyard/core/ports';
-import { ReviewOutputSchema, type ReviewSnapshot } from '@hunkyard/domain';
-
-export type ReviewTraceStep = {
-  diff: string;
-  instructions: string[];
-  output: unknown;
-};
-
-export type FakeModelRequest = { diff: string; instructions: string[] };
-export type FakeModelGateway = { generate: (request: FakeModelRequest) => Promise<unknown> };
-
-/** No network transport; deterministic input matching and raw response replay. */
-export const createReplayModelGateway = (steps: readonly ReviewTraceStep[]) => {
-  const trace = structuredClone(steps);
-  let cursor = 0;
-  const gateway: FakeModelGateway = {
-    generate: async ({ diff, instructions }) => {
-      const step = trace[cursor];
-      if (!step) throw new Error('Review trace exhausted.');
-      if (
-        diff !== step.diff ||
-        JSON.stringify(instructions) !== JSON.stringify(step.instructions)
-      ) {
-        throw new Error(`Review trace input mismatch at step ${cursor}.`);
-      }
-      cursor += 1;
-      return structuredClone(step.output);
-    },
-  };
-  return {
-    gateway,
-    assertConsumed: () => {
-      if (cursor !== trace.length) throw new Error('Review trace has unconsumed steps.');
-    },
-  };
-};
-
-export const createReplayReviewer = (steps: readonly ReviewTraceStep[]) => {
-  const replay = createReplayModelGateway(steps);
-  const agent: ReviewAgent = {
-    review: async ({ snapshot, instructions }) =>
-      ReviewOutputSchema.parse(await replay.gateway.generate({ diff: snapshot.diff, instructions }))
-        .findings,
-  };
-  return { ...replay, agent };
-};
+import type { ReviewSnapshot } from '@hunkyard/domain';
 
 export const fixtureSnapshot = (diff: string): ReviewSnapshot => ({
   version: 2,

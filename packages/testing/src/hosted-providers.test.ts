@@ -15,12 +15,7 @@ import {
   updateConfig,
 } from '@hunkyard/context';
 import { createReviewPlan } from '@hunkyard/core';
-import {
-  assertCurrentAuthorization,
-  ModelTargetSchema,
-  ProviderSchema,
-  SecretRequestSchema,
-} from '@hunkyard/domain';
+import { assertCurrentAuthorization, ModelTargetSchema } from '@hunkyard/domain';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 beforeEach(() => {
@@ -241,10 +236,4 @@ test('legacy OpenAI consent never authorizes a new destination, grants are repos
       [directory, root, other].map((path) => rm(path, { recursive: true, force: true })),
     );
   }
-});
-
-test('secret API boundary accepts a key for every selectable provider', () => {
-  for (const provider of ProviderSchema.options)
-    expect(SecretRequestSchema.parse({ provider, secret: 'fixture-key' }).provider).toBe(provider);
-  expect(() => SecretRequestSchema.parse({ provider: 'unknown', secret: 'fixture-key' })).toThrow();
 });

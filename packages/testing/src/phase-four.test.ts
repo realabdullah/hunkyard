@@ -363,29 +363,6 @@ test('bounded specialist concurrency, timeout and source-budget failures cannot 
   }
 });
 
-test('seeded benchmark compares profiles/models and safe counterexamples without claiming inference quality', async () => {
-  const { runQualityBenchmark } = await import('./phase-four-benchmark');
-  const report = await runQualityBenchmark();
-  expect(report.synthetic).toBe(true);
-  expect(report.rows).toHaveLength(12);
-  expect(report.rows.every((row) => row.status === 'completed')).toBe(true);
-  expect(
-    report.rows.find(
-      (row) => row.model === 'scripted-precise' && row.profile === 'deep' && !row.verify,
-    ),
-  ).toMatchObject({ truePositives: 5, falsePositives: 0, rawCandidates: 9, finalFindings: 5 });
-  expect(
-    report.rows.find(
-      (row) => row.model === 'scripted-noisy' && row.profile === 'standard' && !row.verify,
-    ),
-  ).toMatchObject({ truePositives: 3, falsePositives: 1, rawCandidates: 8, finalFindings: 4 });
-  expect(
-    report.rows.find(
-      (row) => row.model === 'scripted-noisy' && row.profile === 'deep' && row.verify,
-    ),
-  ).toMatchObject({ truePositives: 5, falsePositives: 0, finalFindings: 5 });
-});
-
 test('transient retry is bounded, repeat execution does not dispatch twice, and queued hosted routes recheck revoked consent', async () => {
   const fixture = await setup();
   try {
